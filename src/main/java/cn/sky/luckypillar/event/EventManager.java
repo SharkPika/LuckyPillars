@@ -68,18 +68,20 @@ public class EventManager {
             CC.warn("&c已有事件正在进行中");
             return;
         }
-        // 调用当前事件结束
-        if (currentEvent != null) {
+
+        if (force && currentEvent != null) {
+            // 调用当前事件结束
             currentEvent.onEnd(game);
+            Map<String, String> p = new HashMap<>();
+            p.put("event_name", currentEvent.getName());
+            game.broadcast(skyConfig.format(skyConfig.getEventEnded(), p));
+            CC.send("&a事件 " + currentEvent.getName() + " 已结束");
+            if (eventTask != null) {
+                eventTask.cancel();
+                eventTask = null;
+            }
         }
-        Map<String, String> p = new HashMap<>();
-        p.put("event_name", currentEvent.getName());
-        game.broadcast(skyConfig.format(skyConfig.getEventEnded(), p));
-        CC.send("&a事件 " + currentEvent.getName() + " 已结束");
-        if (eventTask != null) {
-            eventTask.cancel();
-            eventTask = null;
-        }
+
         currentEvent = event;
         eventTickCounter = 0;
         

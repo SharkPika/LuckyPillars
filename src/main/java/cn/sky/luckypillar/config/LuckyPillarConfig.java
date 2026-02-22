@@ -17,158 +17,161 @@ public class LuckyPillarConfig extends Configuration {
 
     // 游戏基础配置
     @ConfigData("game.name")
-    private final String gameName = "SkyLuckyPillar";
+    private String gameName = "SkyLuckyPillar";
 
     @ConfigData("game.map")
-    private final String mapName = "world";
+    private String mapName = "world";
 
     @ConfigData("game.min-players")
-    private final int minPlayers = 2;
+    private int minPlayers = 2;
 
     @ConfigData("game.countdown")
-    private final int countdown = 10;
+    private int countdown = 10;
 
     @ConfigData("game.game-timeout")
-    private final int gameTimeout = 1800;
+    private int gameTimeout = 1800;
+
+    @ConfigData("game.item-countdown")
+    private int itemCountdown = 5;
 
     // 柱子配置
     @ConfigData("pillars.default-platform-size")
-    private final int defaultPlatformSize = 1;
+    private int defaultPlatformSize = 1;
 
     @ConfigData("pillars.default-platform-material")
-    private final String defaultPlatformMaterial = "BEDROCK";
+    private String defaultPlatformMaterial = "BEDROCK";
 
     @ConfigData("pillars.default-height")
-    private final int defaultHeight = 72;
+    private int defaultHeight = 72;
 
     // 物品配置
     @ConfigData("items.ban-list")
-    private final List<String> banList = List.of("AIR", "WATER", "LAVA", "BARRIER");
+    private List<String> banList = List.of("AIR", "WATER", "LAVA", "BARRIER");
 
     // 事件配置
     @ConfigData("events.cooldown")
-    private final int eventCooldown = 120;
+    private int eventCooldown = 120;
 
     @ConfigData("events.first-event-delay")
-    private final int firstEventDelay = 60;
+    private int firstEventDelay = 60;
 
     // 怪物狂潮事件
     @ConfigData("events.monster-frenzy.enabled")
-    private final boolean monsterFrenzyEnabled = true;
+    private boolean monsterFrenzyEnabled = true;
 
     @ConfigData("events.monster-frenzy.duration")
-    private final int monsterFrenzyDuration = 30;
+    private int monsterFrenzyDuration = 30;
 
     @ConfigData("events.monster-frenzy.monsters-per-player")
-    private final int monstersPerPlayer = 6;
+    private int monstersPerPlayer = 6;
 
     @ConfigData("events.monster-frenzy.monster-types")
-    private final List<String> monsterTypes = List.of("ZOMBIE", "SKELETON", "SPIDER", "CREEPER");
+    private List<String> monsterTypes = List.of("ZOMBIE", "SKELETON", "SPIDER", "CREEPER");
 
     // 箭雨事件
     @ConfigData("events.arrow-rain.enabled")
-    private final boolean arrowRainEnabled = true;
+    private boolean arrowRainEnabled = true;
 
     @ConfigData("events.arrow-rain.duration")
-    private final int arrowRainDuration = 20;
+    private int arrowRainDuration = 20;
 
     @ConfigData("events.arrow-rain.arrow-chance")
-    private final double arrowChance = 0.3;
+    private double arrowChance = 0.3;
 
     @ConfigData("events.arrow-rain.arrow-speed")
-    private final double arrowSpeed = 1.0;
+    private double arrowSpeed = 1.0;
 
     // 岩浆上升事件
     @ConfigData("events.lava-rise.enabled")
-    private final boolean lavaRiseEnabled = true;
+    private boolean lavaRiseEnabled = true;
 
     @ConfigData("events.lava-rise.duration")
-    private final int lavaRiseDuration = 40;
+    private int lavaRiseDuration = 40;
 
     @ConfigData("events.lava-rise.rise-speed")
-    private final int lavaRiseSpeed = 1;
+    private int lavaRiseSpeed = 1;
 
     @ConfigData("events.lava-rise.max-height")
-    private final int lavaMaxHeight = 100;
+    private int lavaMaxHeight = 100;
 
     // 方块衰减事件
     @ConfigData("events.block-decay.enabled")
-    private final boolean blockDecayEnabled = true;
+    private boolean blockDecayEnabled = true;
 
     @ConfigData("events.block-decay.duration")
-    private final int blockDecayDuration = 30;
+    private int blockDecayDuration = 30;
 
     @ConfigData("events.block-decay.decay-chance")
-    private final double decayChance = 0.05;
+    private double decayChance = 0.05;
 
     @ConfigData("events.block-decay.exclude-materials")
-    private final List<String> excludeMaterials = List.of("BEDROCK", "OBSIDIAN");
+    private List<String> excludeMaterials = List.of("BEDROCK", "OBSIDIAN");
 
     // 空投补给事件
     @ConfigData("events.supply-drop.enabled")
-    private final boolean supplyDropEnabled = true;
+    private boolean supplyDropEnabled = true;
 
     @ConfigData("events.supply-drop.duration")
-    private final int supplyDropDuration = 5;
+    private int supplyDropDuration = 5;
 
     @ConfigData("events.supply-drop.drop-count")
-    private final int dropCount = 3;
+    private int dropCount = 3;
 
     @ConfigData("events.supply-drop.items-per-drop")
-    private final int itemsPerDrop = 5;
+    private int itemsPerDrop = 5;
 
     // 游戏规则
     @ConfigData("rules.void-death-height")
-    private final int voidDeathHeight = -64;
+    private int voidDeathHeight = -64;
 
     @ConfigData("rules.keep-inventory")
-    private final boolean keepInventory = false;
+    private boolean keepInventory = false;
 
     @ConfigData("rules.drop-items-on-death")
-    private final boolean dropItemsOnDeath = true;
+    private boolean dropItemsOnDeath = true;
 
     @ConfigData("rules.max-build-height")
-    private final int maxBuildHeight = 256;
+    private int maxBuildHeight = 256;
 
     @ConfigData("rules.min-build-height")
-    private final int minBuildHeight = 0;
+    private int minBuildHeight = 0;
 
     @ConfigData("rules.allow-block-break")
-    private final boolean allowBlockBreak = true;
+    private boolean allowBlockBreak = true;
 
     @ConfigData("rules.allow-block-place")
-    private final boolean allowBlockPlace = true;
+    private boolean allowBlockPlace = true;
 
     @ConfigData("rules.pvp-enabled")
-    private final boolean pvpEnabled = true;
+    private boolean pvpEnabled = true;
 
     @ConfigData("rules.friendly-fire")
-    private final boolean friendlyFire = false;
+    private boolean friendlyFire = false;
 
     @ConfigData("rules.hunger-enabled")
-    private final boolean hungerEnabled = true;
+    private boolean hungerEnabled = true;
 
     @ConfigData("rules.natural-regeneration")
-    private final boolean naturalRegeneration = true;
+    private boolean naturalRegeneration = true;
 
     @ConfigData("rules.fall-damage")
-    private final boolean fallDamage = true;
+    private boolean fallDamage = true;
 
     @ConfigData("rules.fire-damage")
-    private final boolean fireDamage = true;
+    private boolean fireDamage = true;
 
     // 观战模式
     @ConfigData("spectator.allow-flight")
-    private final boolean spectatorAllowFlight = true;
+    private boolean spectatorAllowFlight = true;
 
     @ConfigData("spectator.allow-teleport")
-    private final boolean spectatorAllowTeleport = true;
+    private boolean spectatorAllowTeleport = true;
 
     @ConfigData("spectator.restrict-to-game-area")
-    private final boolean restrictToGameArea = true;
+    private boolean restrictToGameArea = true;
 
     @ConfigData("spectator.show-alive-players")
-    private final boolean showAlivePlayers = true;
+    private boolean showAlivePlayers = true;
 
     public LuckyPillarConfig(JavaPlugin plugin) {
         super(plugin, "game.yml");

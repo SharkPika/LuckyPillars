@@ -136,6 +136,13 @@ titles:
     stay: 80
     fade-out: 20
 
+  game-over:
+    title: "&c&l游戏结束"
+    subtitle: "&6胜利者: &e%winner%"
+    fade-in: 10
+    stay: 80
+    fade-out: 20
+
   event-start:
     title: "&6事件开始"
     subtitle: "&e%event_name%"

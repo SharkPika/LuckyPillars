@@ -18,92 +18,92 @@ public class SkyConfig extends Configuration {
 
     // 服务器信息
     @ConfigData("server")
-    private final String server = "yourserver.ip";
+    private String server = "yourserver.ip";
 
     // 聊天格式
     @ConfigData("chatformat.waiting")
-    private final String chatFormatWaiting = "&7[等待] &f%player_name%: %message%";
+    private String chatFormatWaiting = "&7[等待] &f%player_name%: %message%";
 
     @ConfigData("chatformat.playing")
-    private final String chatFormatPlaying = "&a[游戏中] &f%player_name%: %message%";
+    private String chatFormatPlaying = "&a[游戏中] &f%player_name%: %message%";
 
     @ConfigData("chatformat.spectating")
-    private final String chatFormatSpectating = "&7[观战] &8%player_name%: %message%";
+    private String chatFormatSpectating = "&7[观战] &8%player_name%: %message%";
 
     @ConfigData("chatformat.dead")
-    private final String chatFormatDead = "&c[已死亡] &7%player_name%: %message%";
+    private String chatFormatDead = "&c[已死亡] &7%player_name%: %message%";
 
     // 游戏状态消息
     @ConfigData("messages.game-starting")
-    private final String gameStarting = "&a游戏将在 &e%countdown% &a秒后开始！";
+    private String gameStarting = "&a游戏将在 &e%countdown% &a秒后开始！";
 
     @ConfigData("messages.game-started")
-    private final String gameStarted = "&a游戏开始！祝你好运！";
+    private String gameStarted = "&a游戏开始！祝你好运！";
 
     @ConfigData("messages.game-ended")
-    private final String gameEnded = "&e游戏结束！";
+    private String gameEnded = "&e游戏结束！";
 
     @ConfigData("messages.game-winner")
-    private final String gameWinner = "&6恭喜 &e%winner% &6获得胜利！";
+    private String gameWinner = "&6恭喜 &e%winner% &6获得胜利！";
 
     @ConfigData("messages.game-timeout")
-    private final String gameTimeout = "&c游戏超时！没有胜利者！";
+    private String gameTimeout = "&c游戏超时！没有胜利者！";
 
     // 玩家消息
     @ConfigData("messages.player-joined")
-    private final String playerJoined = "&a%player% &7加入了游戏 &8[&e%current%&7/&e%max%&8]";
+    private String playerJoined = "&a%player% &7加入了游戏 &8[&e%current%&7/&e%max%&8]";
 
     @ConfigData("messages.player-left")
-    private final String playerLeft = "&c%player% &7离开了游戏";
+    private String playerLeft = "&c%player% &7离开了游戏";
 
     @ConfigData("messages.player-killed")
-    private final String playerKilled = "&c%player% &7被 &e%killer% &7击杀";
+    private String playerKilled = "&c%player% &7被 &e%killer% &7击杀";
 
     @ConfigData("messages.player-died")
-    private final String playerDied = "&c%player% &7死亡：%reason%";
+    private String playerDied = "&c%player% &7死亡：%reason%";
 
     @ConfigData("messages.player-eliminated")
-    private final String playerEliminated = "&c%player% &7被淘汰！剩余 &e%remaining% &7名玩家";
+    private String playerEliminated = "&c%player% &7被淘汰！剩余 &e%remaining% &7名玩家";
 
     // 事件消息
     @ConfigData("messages.event-starting")
-    private final String eventStarting = "&6[事件] &e%event_name% &6即将开始！";
+    private String eventStarting = "&6[事件] &e%event_name% &6即将开始！";
 
     @ConfigData("messages.event-started")
-    private final String eventStarted = "&6[事件] &e%event_name% &6已开始！持续 &c%duration% &6秒";
+    private String eventStarted = "&6[事件] &e%event_name% &6已开始！持续 &c%duration% &6秒";
 
     @ConfigData("messages.event-ended")
-    private final String eventEnded = "&6[事件] &e%event_name% &6已结束！";
+    private String eventEnded = "&6[事件] &e%event_name% &6已结束！";
 
     // 错误消息
     @ConfigData("messages.not-enough-players")
-    private final String notEnoughPlayers = "&c玩家数量不足！至少需要 &e%min% &c名玩家";
+    private String notEnoughPlayers = "&c玩家数量不足！至少需要 &e%min% &c名玩家";
 
     @ConfigData("messages.game-full")
-    private final String gameFull = "&c游戏已满！";
+    private String gameFull = "&c游戏已满！";
 
     @ConfigData("messages.game-in-progress")
-    private final String gameInProgress = "&c游戏正在进行中！";
+    private String gameInProgress = "&c游戏正在进行中！";
 
     @ConfigData("messages.no-permission")
-    private final String noPermission = "&c你没有权限执行此命令！";
+    private String noPermission = "&c你没有权限执行此命令！";
 
     // 命令消息
     @ConfigData("messages.pillar-added")
-    private final String pillarAdded = "&a成功添加柱子 &e%id%";
+    private String pillarAdded = "&a成功添加柱子 &e%id%";
 
     @ConfigData("messages.pillar-removed")
-    private final String pillarRemoved = "&a成功移除柱子 &e%id%";
+    private String pillarRemoved = "&a成功移除柱子 &e%id%";
 
     @ConfigData("messages.config-reloaded")
-    private final String configReloaded = "&a配置已重新加载！";
+    private String configReloaded = "&a配置已重新加载！";
 
     // 计分板配置
     @ConfigData("scoreboard.title")
-    private final String scoreboardTitle = "&6&l幸运柱子";
+    private String scoreboardTitle = "&6&l幸运柱子";
 
     @ConfigData("scoreboard.lines.waiting")
-    private final List<String> scoreboardWaiting = List.of(
+    private List<String> scoreboardWaiting = List.of(
             "&7&m-------------------",
             "&e游戏: &fLuckyPillar",
             "",
@@ -114,7 +114,7 @@ public class SkyConfig extends Configuration {
     );
 
     @ConfigData("scoreboard.lines.playing")
-    private final List<String> scoreboardPlaying = List.of(
+    private List<String> scoreboardPlaying = List.of(
             "&7&m-------------------",
             "&e游戏: &fLuckyPillar",
             "",
@@ -128,8 +128,21 @@ public class SkyConfig extends Configuration {
             "&7&m-------------------"
     );
 
+    @ConfigData("scoreboard.lines.ending")
+    private List<String> scoreboardEnding = List.of(
+            "&7&m-------------------",
+            "&e地图: &f%map%",
+            "",
+            "&e击杀: &c%kills%",
+            "&6胜利者: &e%winner%",
+            "",
+            "&c&l游戏结束",
+            "",
+            "&7&m-------------------"
+    );
+
     @ConfigData("scoreboard.lines.dead")
-    private final List<String> scoreboardDead = List.of(
+    private List<String> scoreboardDead = List.of(
             "&7&m-------------------",
             "&e游戏: &fLuckyPillar",
             "",
@@ -142,7 +155,7 @@ public class SkyConfig extends Configuration {
     );
 
     @ConfigData("scoreboard.lines.spectating")
-    private final List<String> scoreboardSpectating = List.of(
+    private List<String> scoreboardSpectating = List.of(
             "&7&m-------------------",
             "&e游戏: &fLuckyPillar",
             "",
@@ -155,102 +168,116 @@ public class SkyConfig extends Configuration {
 
     // Boss血条配置
     @ConfigData("bossbar.event.color")
-    private final String bossbarEventColor = "RED";
+    private String bossbarEventColor = "RED";
 
     @ConfigData("bossbar.event.style")
-    private final String bossbarEventStyle = "SOLID";
+    private String bossbarEventStyle = "SOLID";
 
     @ConfigData("bossbar.event.title")
-    private final String bossbarEventTitle = "&c[事件] &e%event_name% &7- &f%time%s";
+    private String bossbarEventTitle = "&c[事件] &e%event_name% &7- &f%time%s";
 
     @ConfigData("bossbar.countdown.color")
-    private final String bossbarCountdownColor = "GREEN";
+    private String bossbarCountdownColor = "GREEN";
 
     @ConfigData("bossbar.countdown.style")
-    private final String bossbarCountdownStyle = "SEGMENTED_10";
+    private String bossbarCountdownStyle = "SEGMENTED_10";
 
     @ConfigData("bossbar.countdown.title")
-    private final String bossbarCountdownTitle = "&a游戏开始倒计时: &e%countdown%";
+    private String bossbarCountdownTitle = "&a游戏开始倒计时: &e%countdown%";
 
-    // 标题配置
     @ConfigData("titles.game-start.title")
-    private final String titleGameStartTitle = "&a游戏开始";
+    private String titleGameStartTitle = "&a游戏开始";
 
     @ConfigData("titles.game-start.subtitle")
-    private final String titleGameStartSubtitle = "&e祝你好运！";
+    private String titleGameStartSubtitle = "&e祝你好运！";
 
     @ConfigData("titles.game-start.fade-in")
-    private final int titleGameStartFadeIn = 10;
+    private int titleGameStartFadeIn = 10;
 
     @ConfigData("titles.game-start.stay")
-    private final int titleGameStartStay = 40;
+    private int titleGameStartStay = 40;
 
     @ConfigData("titles.game-start.fade-out")
-    private final int titleGameStartFadeOut = 10;
+    private int titleGameStartFadeOut = 10;
 
     @ConfigData("titles.player-killed.title")
-    private final String titlePlayerKilledTitle = "&c你被击杀了";
+    private String titlePlayerKilledTitle = "&c你被击杀了";
 
     @ConfigData("titles.player-killed.subtitle")
-    private final String titlePlayerKilledSubtitle = "&7击杀者: &e%killer%";
+    private String titlePlayerKilledSubtitle = "&7击杀者: &e%killer%";
 
     @ConfigData("titles.player-killed.fade-in")
-    private final int titlePlayerKilledFadeIn = 10;
+    private int titlePlayerKilledFadeIn = 10;
 
     @ConfigData("titles.player-killed.stay")
-    private final int titlePlayerKilledStay = 60;
+    private int titlePlayerKilledStay = 60;
 
     @ConfigData("titles.player-killed.fade-out")
-    private final int titlePlayerKilledFadeOut = 20;
+    private int titlePlayerKilledFadeOut = 20;
 
     @ConfigData("titles.victory.title")
-    private final String titleVictoryTitle = "&6&l胜利！";
+    private String titleVictoryTitle = "&6&l胜利！";
 
     @ConfigData("titles.victory.subtitle")
-    private final String titleVictorySubtitle = "&e你是最后的幸存者！";
+    private String titleVictorySubtitle = "&e你是最后的幸存者！";
 
     @ConfigData("titles.victory.fade-in")
-    private final int titleVictoryFadeIn = 10;
+    private int titleVictoryFadeIn = 10;
 
     @ConfigData("titles.victory.stay")
-    private final int titleVictoryStay = 80;
+    private int titleVictoryStay = 80;
 
     @ConfigData("titles.victory.fade-out")
-    private final int titleVictoryFadeOut = 20;
+    private int titleVictoryFadeOut = 20;
+
+    @ConfigData("titles.game-over.title")
+    private String titleGameOverTitle = "&c&l游戏结束";
+
+    @ConfigData("titles.game-over.subtitle")
+    private String titleGameOverSubtitle;
+
+    @ConfigData("titles.game-over.fade-in")
+    private int titleGameOverFadeIn = 10;
+
+    @ConfigData("titles.game-over.stay")
+    private int titleGameOverStay = 80;
+
+    @ConfigData("titles.game-over.fade-out")
+    private int titleGameOverFadeOut = 20;
 
     @ConfigData("titles.event-start.title")
-    private final String titleEventStartTitle = "&6事件开始";
+    private String titleEventStartTitle = "&6事件开始";
 
     @ConfigData("titles.event-start.subtitle")
-    private final String titleEventStartSubtitle = "&e%event_name%";
+    private String titleEventStartSubtitle = "&e%event_name%";
 
     @ConfigData("titles.event-start.fade-in")
-    private final int titleEventStartFadeIn = 5;
+    private int titleEventStartFadeIn = 5;
 
     @ConfigData("titles.event-start.stay")
-    private final int titleEventStartStay = 40;
+    private int titleEventStartStay = 40;
 
     @ConfigData("titles.event-start.fade-out")
-    private final int titleEventStartFadeOut = 10;
+    private int titleEventStartFadeOut = 10;
 
     // 音效配置
     @ConfigData("sounds.game-start")
-    private final String soundGameStart = "ENTITY_PLAYER_LEVELUP";
+    private String soundGameStart = "ENTITY_PLAYER_LEVELUP";
 
     @ConfigData("sounds.game-end")
-    private final String soundGameEnd = "UI_TOAST_CHALLENGE_COMPLETE";
+    private String soundGameEnd = "UI_TOAST_CHALLENGE_COMPLETE";
 
     @ConfigData("sounds.player-death")
-    private final String soundPlayerDeath = "ENTITY_PLAYER_DEATH";
+    private String soundPlayerDeath = "ENTITY_PLAYER_DEATH";
 
     @ConfigData("sounds.player-kill")
-    private final String soundPlayerKill = "ENTITY_EXPERIENCE_ORB_PICKUP";
+    private String soundPlayerKill = "ENTITY_EXPERIENCE_ORB_PICKUP";
 
     @ConfigData("sounds.event-start")
-    private final String soundEventStart = "ENTITY_ENDER_DRAGON_GROWL";
+    private String soundEventStart = "ENTITY_ENDER_DRAGON_GROWL";
 
     @ConfigData("sounds.countdown")
-    private final String soundCountdown = "BLOCK_NOTE_BLOCK_PLING";
+    private String soundCountdown = "BLOCK_NOTE_BLOCK_PLING";
 
     public SkyConfig(JavaPlugin plugin) {
         super(plugin, "config.yml");

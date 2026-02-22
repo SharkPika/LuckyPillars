@@ -14,10 +14,7 @@ import cn.sky.luckypillar.utils.chat.CC;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
-import org.bukkit.GameRule;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -57,6 +54,7 @@ public class LuckyPillarGame {
 
     private LuckyPillarItemRunnable gameRunnable;
 
+    private UUID winner;
     
     // 玩家数据（使用线程安全的集合）
     private final Map<UUID, LuckyPillarPlayer> players;
@@ -193,7 +191,7 @@ public class LuckyPillarGame {
         if (stateManager.getCurrentState() == GameState.WAITING 
             && players.size() >= config.getMinPlayers()
             && countdown == -1) {
-            countdown = 120;
+            countdown = 60;
             players.values().forEach(player -> player.getBukkitPlayer().setLevel(countdown));
             countdownTask = new BukkitRunnable() {
                 @Override
@@ -203,8 +201,9 @@ public class LuckyPillarGame {
                         stateManager.changeState(GameState.STARTING);
                         return;
                     }
-                    countdown--;
+
                     players.values().forEach(player -> player.getBukkitPlayer().setLevel(countdown));
+                    countdown--;
                 }
             }.runTaskTimer(plugin, 0, 20L);
         }
@@ -257,7 +256,8 @@ public class LuckyPillarGame {
             winner.getBukkitPlayer().setFlying(true);
             CC.send("&a玩家 " + winner.getName() + " 获得胜利！");
 
-            titleManager.showVictoryTitleToAll();
+            titleManager.showVictoryTitle(winner.getBukkitPlayer());
+            titleManager.showGameOverTitleToAll();
         } else {
             // 没有胜利者（超时或其他原因）
             broadcast(skyConfig.format(skyConfig.getGameTimeout(), new HashMap<>()));
@@ -358,6 +358,7 @@ public class LuckyPillarGame {
         if (alivePlayers.size() == 1) {
             // 只剩一名玩家，游戏结束
             LuckyPillarPlayer winner = alivePlayers.get(0);
+            this.winner = winner.getUuid();
             endGame(winner);
         } else if (alivePlayers.isEmpty()) {
             // 没有存活玩家
@@ -426,7 +427,10 @@ public class LuckyPillarGame {
                 startGame();
                 return;
             }
-            Bukkit.getOnlinePlayers().forEach(player -> player.setLevel(countdown));
+            Bukkit.getOnlinePlayers().forEach(player -> {
+                player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.0f);
+                player.setLevel(countdown);
+            });
 
             Map<String, String> placeholders = new HashMap<>();
             placeholders.put("countdown", String.valueOf(countdown));
@@ -483,7 +487,7 @@ public class LuckyPillarGame {
         }
 
         gameRunnable = new LuckyPillarItemRunnable();
-        gameRunnable.runTaskTimer(plugin, 0L, 5 * 20L);
+        gameRunnable.runTaskTimer(plugin, 0L, config.getItemCountdown() * 20L);
     }
     
     /**

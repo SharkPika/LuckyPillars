@@ -201,7 +201,7 @@ public class LuckyPillarCommand implements CommandExecutor {
         }
 
         if (args.length < 2) {
-            CC.send(sender, "&c用法: /pillar event <start|stop|end|reset> [id]");
+            CC.send(sender, "&c用法: /pillar event <start|stop|end|reset|status> [id]");
             return;
         }
 
@@ -226,6 +226,9 @@ public class LuckyPillarCommand implements CommandExecutor {
                 }
                 String id = args[2];
                 GameEvent event = eventManager.getRegisteredEvents().get(id);
+                if (id.equals("random")) {
+                    event = eventManager.selectRandomEvent();
+                }
                 if (event == null) {
                     CC.send(sender, "&c事件不存在: " + id);
                     return;
@@ -252,7 +255,22 @@ public class LuckyPillarCommand implements CommandExecutor {
                 eventScheduler.reset();
                 CC.send(sender, "&6事件调度器已重置");
             }
-            default -> CC.send(sender, "&c用法: /pillar event <start|stop|end|reset> [id]");
+            case "status" -> {
+                CC.send(sender, "&e=== 当前事件状态 ===");
+                if (eventManager.isEventActive()) {
+                    CC.send(sender, "&7- &f" + eventManager.getCurrentEvent().getName() + " &7(持续时间: " + eventManager.getEventTickCounter() + " 秒)");
+                } else {
+                    CC.send(sender, "&7- &c没有正在进行的事件");
+                }
+                CC.send(sender, "&e=== 事件调度器状态 ===");
+                if (eventScheduler.getSchedulerTask() != null) {
+                    CC.send(sender, "&7- &a事件调度器已启动");
+                    CC.send(sender, "&7- &f" + eventScheduler.getTimeUntilNextEvent() + " 秒后触发下一个事件");
+                } else {
+                    CC.send(sender, "&7- &c事件调度器未启动");
+                }
+            }
+            default -> CC.send(sender, "&c用法: /pillar event <start|stop|end|reset|status> [id]");
         }
     }
 
@@ -288,6 +306,11 @@ public class LuckyPillarCommand implements CommandExecutor {
             CC.send(sender, "&e/pillar setup add <id> <height> &7- 在当前位置添加柱子");
             CC.send(sender, "&e/pillar setup remove <id> &7- 移除柱子");
             CC.send(sender, "&e/pillar setup list &7- 列出所有柱子");
+            CC.send(sender, "&e/pillar event start [id|random] &7- 开启事件调度器 [强制开启指定事件或随机事件]");
+            CC.send(sender, "&e/pillar event stop &7- 停止事件调度器");
+            CC.send(sender, "&e/pillar event end &7- 强制结束当前事件");
+            CC.send(sender, "&e/pillar event reset &7- 重置事件调度器");
+            CC.send(sender, "&e/pillar event status &7- 显示当前事件状态");
             CC.send(sender, "&e/pillar reload &7- 重新加载配置");
         }
     }

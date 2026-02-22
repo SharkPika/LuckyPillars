@@ -75,16 +75,19 @@ public class TitleManager {
     /**
      * 向所有玩家显示胜利标题
      */
-    public void showVictoryTitleToAll() {
-        String title = CC.translate(skyConfig.getTitleVictoryTitle());
-        String subtitle = CC.translate(skyConfig.getTitleVictorySubtitle());
+    public void showGameOverTitleToAll() {
+        String title = CC.translate(skyConfig.getTitleGameOverTitle()
+                .replace("%winner%", game.getPlayer(game.getWinner()).getName()));
+        String subtitle = CC.translate(skyConfig.getTitleGameOverSubtitle()
+                .replace("%winner%", game.getPlayer(game.getWinner()).getName()));
         for (Player player : Bukkit.getOnlinePlayers()) {
+            if (player.getUniqueId().equals(game.getPlayer(game.getWinner()).getBukkitPlayer().getUniqueId())) continue;
             player.sendTitle(
                     title,
                     subtitle,
-                    skyConfig.getTitleVictoryFadeIn(),
-                    skyConfig.getTitleVictoryStay(),
-                    skyConfig.getTitleVictoryFadeOut()
+                    skyConfig.getTitleGameOverFadeIn(),
+                    skyConfig.getTitleGameOverStay(),
+                    skyConfig.getTitleGameOverFadeOut()
             );
 
         }

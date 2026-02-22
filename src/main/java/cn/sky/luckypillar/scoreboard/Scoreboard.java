@@ -39,7 +39,7 @@ public class Scoreboard implements AssembleAdapter {
             case PLAYING -> lpPlayer.isAlive() ?
                     skyConfig.getScoreboardPlaying() :
                     skyConfig.getScoreboardDead();
-            case ENDING -> skyConfig.getScoreboardSpectating();
+            case ENDING -> skyConfig.getScoreboardPlaying();
         });
         lines.replaceAll(text -> replacePlaceholders(text, lpPlayer));
         return CC.translate(lines);
@@ -56,7 +56,8 @@ public class Scoreboard implements AssembleAdapter {
                 .replace("%time%", formatGameTime())
                 .replace("%event%", game.getEventScheduler().getEventManager().getCurrentEventName())
                 .replace("%serverip%", SkyLuckyPillar.getInstance().getSkyConfig().getServer())
-                .replace("%max%", String.valueOf(game.getMaxPlayer()));
+                .replace("%max%", String.valueOf(game.getMaxPlayer()))
+                .replace("%winner%", game.getWinner() != null ? game.getPlayer(game.getWinner()).getName() : "无");
     }
 
     private String formatGameTime() {
