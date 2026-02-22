@@ -43,10 +43,6 @@ public class PlayerListener implements Listener {
         }
 
         game.addPlayer(player);
-        lpPlayer = game.getPlayer(player);
-
-        Pillar pillar = lpPlayer.assignNewPillar();
-        lpPlayer.getBukkitPlayer().teleport(pillar.getTopLocation());
     }
 
     @EventHandler

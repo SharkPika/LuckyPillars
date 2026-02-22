@@ -44,7 +44,7 @@ public class LuckyPillarCommand implements CommandExecutor {
             case "start" -> handleStart(sender);
             case "stop" -> handleStop(sender);
             case "join" -> handleJoin(sender);
-            case "leave" -> handleLeave(sender);
+            //case "leave" -> handleLeave(sender);
             case "setup" -> handleSetup(sender, args);
             case "event" -> handleEvent(sender, args);
             case "reload" -> handleReload(sender);
@@ -297,7 +297,7 @@ public class LuckyPillarCommand implements CommandExecutor {
     private void sendHelp(CommandSender sender) {
         CC.send(sender, "&6=== SkyLuckyPillar 命令帮助 ===");
         CC.send(sender, "&e/pillar join &7- 加入游戏");
-        CC.send(sender, "&e/pillar leave &7- 离开游戏");
+        //CC.send(sender, "&e/pillar leave &7- 离开游戏");
         
         if (sender.hasPermission("luckypillar.admin")) {
             CC.send(sender, "&c管理员命令:");

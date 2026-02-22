@@ -6,6 +6,7 @@ import cn.sky.luckypillar.display.BossBarManager;
 import cn.sky.luckypillar.display.TitleManager;
 import cn.sky.luckypillar.event.EventScheduler;
 import cn.sky.luckypillar.item.ItemDistributor;
+import cn.sky.luckypillar.pillar.Pillar;
 import cn.sky.luckypillar.pillar.PillarManager;
 import cn.sky.luckypillar.state.GameState;
 import cn.sky.luckypillar.state.GameStateManager;
@@ -132,6 +133,9 @@ public class LuckyPillarGame {
         player.setFlying(false);
         player.setGameMode(GameMode.SURVIVAL);
         player.setLevel(this.getCountdown() == -1 ? 0 : this.getCountdown());
+
+        Pillar pillar = lpPlayer.assignNewPillar();
+        lpPlayer.getBukkitPlayer().teleport(pillar.getTopLocation());
 
         // 广播玩家加入消息
         Map<String, String> placeholders = new HashMap<>();
