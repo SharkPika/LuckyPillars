@@ -4,7 +4,6 @@
 ![GitHub License](https://img.shields.io/github/license/SharkPika/SkyLuckyPillar)
 ![PaperMC](https://img.shields.io/badge/Server-Paper%201.16+-blue)
 ![Java](https://img.shields.io/badge/Java-21+-orange)
-![PlaceholderAPI](https://img.shields.io/badge/PlaceholderAPI-Supported-success)
 
 A fast-paced PvP minigame where players spawn on **floating pillars above an island**. Every few seconds, they receive random items and must fight to be the last one standing. The arena automatically resets after restart the server, keeping the gameplay smooth and repeatable.
 
@@ -14,9 +13,8 @@ A fast-paced PvP minigame where players spawn on **floating pillars above an isl
 
 * Floating pillar-based PvP arena above an island
 * Random item drops every configurable number of seconds
-* Fully automatic game reset after each round
+* Fully automatic game reset after restart the server
 * Customizable spawn, sign, and pillar locations
-* Banned block protection to prevent exploits
 * Simple configuration and fast setup
 
 ---
