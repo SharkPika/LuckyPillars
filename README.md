@@ -6,7 +6,7 @@
 ![Java](https://img.shields.io/badge/Java-21+-orange)
 ![PlaceholderAPI](https://img.shields.io/badge/PlaceholderAPI-Supported-success)
 
-A fast-paced PvP minigame where players spawn on **floating pillars above an island**. Every few seconds, they receive random items and must fight to be the last one standing. The arena automatically resets after each round, keeping the gameplay smooth and repeatable.
+A fast-paced PvP minigame where players spawn on **floating pillars above an island**. Every few seconds, they receive random items and must fight to be the last one standing. The arena automatically resets after restart the server, keeping the gameplay smooth and repeatable.
 
 ---
 
@@ -23,21 +23,21 @@ A fast-paced PvP minigame where players spawn on **floating pillars above an isl
 
 ## 💬 Commands
 
-| Command                 | Description              
-| ----------------------- | -------------------------
-| `/luckypillar join`     | join the current game
-| `/luckypillar start`    | start the current game
-| `/luckypillar stop`     | stop the current game
-| `/luckypillar event`    | manage events of current game
-| `/luckypillar setup`    | setup the game
-| `/luckypillar reload`   | Reloads the configuration
+| Command               | Description                   |
+|-----------------------|-------------------------------|
+| `/luckypillar join`   | join the current game         |
+| `/luckypillar start`  | start the current game        |
+| `/luckypillar stop`   | stop the current game         |
+| `/luckypillar event`  | manage events of current game |
+| `/luckypillar setup`  | setup the game                |
+| `/luckypillar reload` | Reloads the configuration     |
 
 ---
 
 ## 🔐 Permissions
 
-| Permission             | Description                 |
-| ---------------------- | --------------------------- |
-| `luckypillar.admin`    | Allows manage the game      |
+| Permission          | Description            |
+|---------------------|------------------------|
+| `luckypillar.admin` | Allows manage the game |
 
 ---

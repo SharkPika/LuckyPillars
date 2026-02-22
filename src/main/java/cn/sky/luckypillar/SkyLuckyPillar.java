@@ -22,6 +22,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.nio.file.Files;
 
 @Getter
 public class SkyLuckyPillar extends JavaPlugin {
@@ -124,6 +125,7 @@ public class SkyLuckyPillar extends JavaPlugin {
             File configWorld = new File(this.getDataFolder().getPath() + "/" + gameConfig.getMapName());
             if (!configWorld.exists() || configWorld.listFiles().length == 0) {
                 configWorld.mkdirs();
+                Files.delete(new File("./" + gameConfig.getMapName()).toPath());
                 WorldUtil.copyDir("./" + gameConfig.getMapName(), configWorld.getPath());
                 return;
             }
@@ -160,7 +162,7 @@ public class SkyLuckyPillar extends JavaPlugin {
      * 注册监听器
      */
     private void registerListeners() {
-        getServer().getPluginManager().registerEvents(new PlayerListener(game, skyConfig), this);
+        getServer().getPluginManager().registerEvents(new PlayerListener(game), this);
         getServer().getPluginManager().registerEvents(new BlockListener(game), this);
         getServer().getPluginManager().registerEvents(new DamageListener(game, skyConfig), this);
         getServer().getPluginManager().registerEvents(new ChatListener(game, skyConfig), this);

@@ -89,8 +89,11 @@ public class LuckyPillarGame {
         
         this.gameWorld = Bukkit.getWorld(config.getMapName());
         if (this.gameWorld == null) {
-            CC.warn("&c游戏世界 " + config.getMapName() + " 不存在！");
-            throw new IllegalArgumentException("游戏世界 " + config.getMapName() + " 不存在！");
+            WorldCreator creator = new WorldCreator(config.getMapName());
+            creator.type(WorldType.NORMAL);
+            creator.createWorld();
+            //CC.warn("&c游戏世界 " + config.getMapName() + " 不存在！");
+            //throw new IllegalArgumentException("游戏世界 " + config.getMapName() + " 不存在！");
         }
         this.gameWorld.setTime(1000);
         this.gameWorld.getEntities().forEach(Entity::remove);
@@ -154,7 +157,7 @@ public class LuckyPillarGame {
      * 玩家离开游戏
      */
     public void removePlayer(Player player) {
-        LuckyPillarPlayer lpPlayer = players.remove(player.getUniqueId());
+        LuckyPillarPlayer lpPlayer = players.get(player.getUniqueId());
         if (lpPlayer == null) {
             return;
         }
@@ -338,7 +341,7 @@ public class LuckyPillarGame {
      * 转为观战模式
      */
     public void respawnAsSpectator(LuckyPillarPlayer lpPlayer) {
-        if (!lpPlayer.isOnline()) {
+        if (lpPlayer == null || !lpPlayer.isOnline()) {
             return;
         }
         

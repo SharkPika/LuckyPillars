@@ -44,7 +44,7 @@ public class LuckyPillarCommand implements CommandExecutor {
             case "start" -> handleStart(sender);
             case "stop" -> handleStop(sender);
             case "join" -> handleJoin(sender);
-            //case "leave" -> handleLeave(sender);
+            case "leave" -> handleLeave(sender);
             case "setup" -> handleSetup(sender, args);
             case "event" -> handleEvent(sender, args);
             case "reload" -> handleReload(sender);
@@ -102,8 +102,17 @@ public class LuckyPillarCommand implements CommandExecutor {
             CC.send(sender, "&c只有玩家可以执行此命令！");
             return;
         }
-        
+
+        if (game.getStateManager().isEnding()) {
+            CC.send(sender, "&c游戏已结束 无法离开");
+            return;
+        }
+
         game.removePlayer(player);
+        game.respawnAsSpectator(game.getPlayer(player));
+        if (!game.getStateManager().isGameRunning()) {
+            game.getPlayers().remove(player.getUniqueId());
+        }
         CC.send(sender, "&a你已离开游戏！");
     }
     
@@ -297,7 +306,7 @@ public class LuckyPillarCommand implements CommandExecutor {
     private void sendHelp(CommandSender sender) {
         CC.send(sender, "&6=== SkyLuckyPillar 命令帮助 ===");
         CC.send(sender, "&e/pillar join &7- 加入游戏");
-        //CC.send(sender, "&e/pillar leave &7- 离开游戏");
+        CC.send(sender, "&e/pillar leave &7- 离开游戏");
         
         if (sender.hasPermission("luckypillar.admin")) {
             CC.send(sender, "&c管理员命令:");

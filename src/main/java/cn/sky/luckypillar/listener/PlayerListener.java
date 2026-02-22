@@ -1,10 +1,9 @@
 package cn.sky.luckypillar.listener;
 
-import cn.sky.luckypillar.config.SkyConfig;
 import cn.sky.luckypillar.game.LuckyPillarGame;
 import cn.sky.luckypillar.game.LuckyPillarPlayer;
-import cn.sky.luckypillar.pillar.Pillar;
 import cn.sky.luckypillar.state.PlayerState;
+import lombok.AllArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -14,14 +13,16 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.player.*;
 
+@AllArgsConstructor
 public class PlayerListener implements Listener {
     
     private final LuckyPillarGame game;
-    private final SkyConfig skyConfig;
-    
-    public PlayerListener(LuckyPillarGame game, SkyConfig skyConfig) {
-        this.game = game;
-        this.skyConfig = skyConfig;
+
+    @EventHandler
+    public void onPlayerLogin(PlayerLoginEvent event) {
+        if ((game.getStateManager().isWaiting() || game.getStateManager().isStarting()) && Bukkit.getOnlinePlayers().size() >= game.getMaxPlayer()) {
+            event.disallow(PlayerLoginEvent.Result.KICK_FULL, "§c房间人数已满");
+        }
     }
 
     @EventHandler
@@ -42,6 +43,10 @@ public class PlayerListener implements Listener {
             return;
         }
 
+        if (!player.getLocation().getWorld().getName().equals(game.getGameWorld().getName())) {
+            player.teleport(game.getGameWorld().getSpawnLocation());
+        }
+
         game.addPlayer(player);
     }
 
@@ -50,7 +55,7 @@ public class PlayerListener implements Listener {
         Player player = event.getPlayer();
         LuckyPillarPlayer lpPlayer = game.getPlayer(player);
 
-        if ((game.getStateManager().isWaiting() || game.getStateManager().isStarting()) && lpPlayer.getState() != PlayerState.SPECTATING) {
+        if ((game.getStateManager().isWaiting() || game.getStateManager().isStarting()) && lpPlayer != null) {
             Location loc = event.getTo().clone();
             loc.setX(event.getFrom().getX());
             loc.setY(event.getFrom().getY());
@@ -59,8 +64,9 @@ public class PlayerListener implements Listener {
             return;
         }
 
-        if (lpPlayer.getState() != PlayerState.ALIVE) {
+        if (lpPlayer == null || lpPlayer.getState() != PlayerState.ALIVE) {
             return;
+
         }
 
         if (event.getTo().getY() < game.getConfig().getVoidDeathHeight()) {
@@ -80,6 +86,12 @@ public class PlayerListener implements Listener {
             game.removePlayer(player);
             if (game.getStateManager().isWaiting() || game.getStateManager().isStarting()) {
                 game.getPlayers().remove(player.getUniqueId());
+                game.getSpectators().stream().filter(spectator -> !spectator.getUuid().equals(player.getUniqueId()) && !game.getPlayers().containsKey(player.getUniqueId()))
+                    .findFirst()
+                    .ifPresent(spectator -> {
+                        game.getSpectators().removeIf(s -> s.getUuid().equals(spectator.getUuid()));
+                        game.addPlayer(spectator.getBukkitPlayer());
+                    });
             }
         }
     }
