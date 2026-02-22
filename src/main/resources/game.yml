@@ -1,0 +1,98 @@
+# SkyLuckyPillar 游戏配置文件
+
+# 游戏基础配置
+game:
+  name: "SkyLuckyPillar"
+  map: "world"
+  min-players: 2
+  countdown: 10
+  game-timeout: 1800
+
+# 柱子配置
+pillars:
+  # 柱子位置列表（使用 /pillar setup add <id> 命令添加）
+  locations:
+    -
+
+  # 默认配置
+  default-platform-size: 1
+  default-platform-material: "BEDROCK"
+  default-height: 70
+
+# 物品配置
+items:
+  # 禁止物品列表
+  ban-list:
+    - "AIR"
+    - "WATER"
+    - "LAVA"
+    - "BARRIER"
+
+# 事件系统配置
+events:
+  cooldown: 120
+  first-event-delay: 60
+
+  # 怪物狂潮
+  monster-frenzy:
+    enabled: true
+    duration: 30
+    monsters-per-player: 6
+    monster-types:
+      - "ZOMBIE"
+      - "SKELETON"
+      - "SPIDER"
+      - "CREEPER"
+
+  # 箭雨
+  arrow-rain:
+    enabled: true
+    duration: 20
+    arrow-chance: 0.3
+    arrow-speed: 1.0
+
+  # 岩浆上升
+  lava-rise:
+    enabled: true
+    duration: 40
+    rise-speed: 1
+    max-height: 100
+
+  # 方块衰减
+  block-decay:
+    enabled: true
+    duration: 30
+    decay-chance: 0.05
+    exclude-materials:
+      - "BEDROCK"
+      - "OBSIDIAN"
+
+  # 空投补给
+  supply-drop:
+    enabled: true
+    duration: 5
+    drop-count: 3
+    items-per-drop: 5
+
+# 游戏规则
+rules:
+  void-death-height: 0
+  keep-inventory: false
+  drop-items-on-death: true
+  max-build-height: 256
+  min-build-height: 0
+  allow-block-break: true
+  allow-block-place: true
+  pvp-enabled: true
+  friendly-fire: false
+  hunger-enabled: true
+  natural-regeneration: true
+  fall-damage: true
+  fire-damage: true
+
+# 观战模式
+spectator:
+  allow-flight: true
+  allow-teleport: true
+  restrict-to-game-area: true
+  show-alive-players: true

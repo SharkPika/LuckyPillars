@@ -1,0 +1,153 @@
+# SkyLuckyPillar 消息配置文件
+
+server: "yourserver.ip"
+
+# 聊天格式
+chatformat:
+  waiting: "&7[等待] &f%player_name%: %message%"
+  playing: "&a[游戏中] &f%player_name%: %message%"
+  spectating: "&7[观战] &8%player_name%: %message%"
+  dead: "&c[已死亡] &7%player_name%: %message%"
+
+# 游戏消息
+messages:
+  game-starting: "&a游戏将在 &e%countdown% &a秒后开始！"
+  game-started: "&a游戏开始！祝你好运！"
+  game-ended: "&e游戏结束！"
+  game-winner: "&6恭喜 &e%winner% &6获得胜利！"
+  game-timeout: "&c游戏超时！没有胜利者！"
+
+  player-joined: "&a%player% &7加入了游戏 &8[&e%current%&7/&e%max%&8]"
+  player-left: "&c%player% &7离开了游戏"
+  player-killed: "&c%player% &7被 &e%killer% &7击杀"
+  player-died: "&c%player% &7死亡：%reason%"
+  player-eliminated: "&c%player% &7被淘汰！剩余 &e%remaining% &7名玩家"
+
+  event-starting: "&6[事件] &e%event_name% &6即将开始！"
+  event-started: "&6[事件] &e%event_name% &6已开始！持续 &c%duration% &6秒"
+  event-ended: "&6[事件] &e%event_name% &6已结束！"
+
+  not-enough-players: "&c玩家数量不足！至少需要 &e%min% &c名玩家"
+  game-full: "&c游戏已满！"
+  game-in-progress: "&c游戏正在进行中！"
+  no-permission: "&c你没有权限执行此命令！"
+
+  pillar-added: "&a成功添加柱子 &e%id%"
+  pillar-removed: "&a成功移除柱子 &e%id%"
+  config-reloaded: "&a配置已重新加载！"
+
+# 计分板配置
+scoreboard:
+  title: "&6&l幸运之柱"
+  lines:
+    waiting:
+      - "&7&m-------------------"
+      - "&e地图: &f%map%"
+      - ""
+      - "&e状态: &a等待中"
+      - "&e倒计时: &c%countdown%"
+      - "&e玩家: &f%players%/%max%"
+      - ""
+      - "&7&m-------------------"
+
+    playing:
+      - "&7&m-------------------"
+      - "&e地图: &f%map%"
+      - ""
+      - "&e存活: &a%alive%"
+      - "&e击杀: &c%kills%"
+      - "&e时间: &f%time%"
+      - ""
+      - "&e当前事件:"
+      - "&f%event%"
+      - ""
+      - "&7&m-------------------"
+
+    ending:
+      - "&7&m-------------------"
+      - "&e地图: &f%map%"
+      - ""
+      - "&e击杀: &c%kills%"
+      - "&6胜利者: &e%winner%"
+      - ""
+      - "&c&l游戏结束"
+      - ""
+      - "&7&m-------------------"
+
+    dead:
+      - "&7&m-------------------"
+      - "&e地图: &f%map%"
+      - ""
+      - "&c你已被淘汰"
+      - ""
+      - "&e存活: &a%alive%"
+      - "&e你的击杀: &c%kills%"
+      - ""
+      - "&e当前事件:"
+      - "&f%event%"
+      - ""
+      - "&7&m-------------------"
+
+    spectating:
+      - "&7&m-------------------"
+      - "&e地图: &f%map%"
+      - ""
+      - "&7观战中"
+      - ""
+      - "&e存活: &a%alive%"
+      - ""
+      - "&e当前事件:"
+      - "&f%event%"
+      - ""
+      - "&7&m-------------------"
+
+# Boss血条配置
+bossbar:
+  event:
+    color: "RED"
+    style: "SOLID"
+    title: "&c[事件] &e%event_name% &7- &f%time%s"
+
+  countdown:
+    color: "GREEN"
+    style: "SEGMENTED_10"
+    title: "&a游戏开始倒计时: &e%countdown%"
+
+# 标题配置
+titles:
+  game-start:
+    title: "&a游戏开始"
+    subtitle: "&e祝你好运！"
+    fade-in: 10
+    stay: 40
+    fade-out: 10
+
+  player-killed:
+    title: "&c你被击杀了"
+    subtitle: "&7击杀者: &e%killer%"
+    fade-in: 10
+    stay: 60
+    fade-out: 20
+
+  victory:
+    title: "&6&l胜利！"
+    subtitle: "&e你是最后的幸存者！"
+    fade-in: 10
+    stay: 80
+    fade-out: 20
+
+  event-start:
+    title: "&6事件开始"
+    subtitle: "&e%event_name%"
+    fade-in: 5
+    stay: 40
+    fade-out: 10
+
+# 音效配置
+sounds:
+  game-start: "ENTITY_PLAYER_LEVELUP"
+  game-end: "UI_TOAST_CHALLENGE_COMPLETE"
+  player-death: "ENTITY_PLAYER_DEATH"
+  player-kill: "ENTITY_EXPERIENCE_ORB_PICKUP"
+  event-start: "ENTITY_ENDER_DRAGON_GROWL"
+  countdown: "BLOCK_NOTE_BLOCK_PLING"
