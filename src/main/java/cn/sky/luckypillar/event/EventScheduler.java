@@ -5,6 +5,7 @@ import cn.sky.luckypillar.config.LuckyPillarConfig;
 import cn.sky.luckypillar.state.GameState;
 import cn.sky.luckypillar.utils.chat.CC;
 import lombok.Getter;
+import lombok.ToString;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -103,10 +104,10 @@ public class EventScheduler {
     public int getTimeUntilNextEvent() {
         long currentTime = System.currentTimeMillis();
         long timeSinceLastEvent = (currentTime - lastEventTime) / 1000;
-        
+
         int delay = firstEvent ? config.getFirstEventDelay() : config.getEventCooldown();
         int remaining = delay - (int) timeSinceLastEvent;
-        
+
         return Math.max(0, remaining);
     }
     

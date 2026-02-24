@@ -7,16 +7,20 @@ import lombok.AllArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.entity.Allay;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.player.*;
 
-@AllArgsConstructor
 public class PlayerListener implements Listener {
     
     private final LuckyPillarGame game;
+
+    public PlayerListener(LuckyPillarGame game) {
+        this.game = game;
+    }
 
     @EventHandler
     public void onPlayerLogin(PlayerLoginEvent event) {
@@ -66,7 +70,6 @@ public class PlayerListener implements Listener {
 
         if (lpPlayer == null || lpPlayer.getState() != PlayerState.ALIVE) {
             return;
-
         }
 
         if (event.getTo().getY() < game.getConfig().getVoidDeathHeight()) {
@@ -80,6 +83,7 @@ public class PlayerListener implements Listener {
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
+        event.setQuitMessage(null);
         Player player = event.getPlayer();
         
         if (game.isInGame(player)) {

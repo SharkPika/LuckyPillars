@@ -1,14 +1,14 @@
 package cn.sky.luckypillar.event.events;
 
-import cn.sky.luckypillar.game.LuckyPillarGame;
-import cn.sky.luckypillar.game.LuckyPillarPlayer;
 import cn.sky.luckypillar.config.LuckyPillarConfig;
 import cn.sky.luckypillar.event.GameEvent;
+import cn.sky.luckypillar.game.LuckyPillarGame;
 import org.bukkit.Location;
 import org.bukkit.entity.Arrow;
 import org.bukkit.util.Vector;
 
-import java.util.Random;
+import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * 箭雨事件
@@ -17,11 +17,11 @@ import java.util.Random;
 public class ArrowRainEvent implements GameEvent {
     
     private final LuckyPillarConfig config;
-    private final Random random;
+    private List<Location> arrowLocs;
     
     public ArrowRainEvent(LuckyPillarConfig config) {
         this.config = config;
-        this.random = new Random();
+        this.arrowLocs = null;
     }
     
     @Override
@@ -46,27 +46,53 @@ public class ArrowRainEvent implements GameEvent {
     
     @Override
     public void onStart(LuckyPillarGame game) {
-        // 事件开始时不做额外操作
+        if (game.getFarthest() == null) return;
+
+        if (arrowLocs == null) {
+            Location center = game.getCenter();
+            Location farthest = game.getFarthest();
+
+            double cx = center.getX();
+            double cz = center.getZ();
+            double fx = farthest.getX();
+            double fz = farthest.getZ();
+            double y = farthest.getY();
+
+            double dx = fx - cx;
+            double dz = fz - cz;
+            double dist = Math.sqrt(dx * dx + dz * dz);
+
+            double normX = dx / dist;
+            double normZ = dz / dist;
+
+            double newDist = dist + 15;
+
+            double newFx = cx + newDist * normX;
+            double newFz = cz + newDist * normZ;
+
+            double newSx = cx - newDist * normX;
+            double newSz = cz - newDist * normZ;
+
+            arrowLocs = game.getRectanglePoints(
+                    new Location(game.getGameWorld(), newFx, y + 25, newFz),
+                    new Location(game.getGameWorld(), newSx, y + 25, newSz)
+            );
+        }
     }
     
     @Override
     public void onTick(LuckyPillarGame game) {
-        // 每tick向存活玩家位置降下箭矢
-        for (LuckyPillarPlayer player : game.getAlivePlayers()) {
-            if (!player.isOnline()) {
-                continue;
-            }
-            
-            // 根据配置的概率决定是否生成箭
-            if (random.nextDouble() < config.getArrowChance()) {
-                spawnArrow(player.getBukkitPlayer().getLocation());
+        if (arrowLocs == null || arrowLocs.isEmpty()) return;
+
+        for (Location arrowLoc : arrowLocs) {
+            if (ThreadLocalRandom.current().nextDouble() < config.getArrowChance()) {
+                this.spawnArrow(arrowLoc);
             }
         }
     }
     
     @Override
     public void onEnd(LuckyPillarGame game) {
-        // 事件结束时不做额外操作
     }
     
     @Override
@@ -78,19 +104,11 @@ public class ArrowRainEvent implements GameEvent {
     /**
      * 在指定位置上方生成箭
      */
-    private void spawnArrow(Location playerLoc) {
-        if (playerLoc.getWorld() == null) {
+    private void spawnArrow(Location arrowLoc) {
+        if (arrowLoc == null || arrowLoc.getWorld() == null) {
             return;
         }
-        
-        // 在玩家上方20格随机位置生成箭
-        double offsetX = (random.nextDouble() - 0.5) * 10;
-        double offsetZ = (random.nextDouble() - 0.5) * 10;
-        
-        Location arrowLoc = playerLoc.clone().add(offsetX, 20, offsetZ);
-        
-        // 生成箭并设置向下的速度
-        Arrow arrow = playerLoc.getWorld().spawnArrow(
+        Arrow arrow = arrowLoc.getWorld().spawnArrow(
             arrowLoc,
             new Vector(0, -1, 0),
             (float) config.getArrowSpeed(),

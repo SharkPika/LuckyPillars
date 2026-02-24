@@ -9,10 +9,7 @@ import cn.sky.luckypillar.event.EventManager;
 import cn.sky.luckypillar.event.EventScheduler;
 import cn.sky.luckypillar.event.events.*;
 import cn.sky.luckypillar.game.LuckyPillarGame;
-import cn.sky.luckypillar.listener.BlockListener;
-import cn.sky.luckypillar.listener.ChatListener;
-import cn.sky.luckypillar.listener.DamageListener;
-import cn.sky.luckypillar.listener.PlayerListener;
+import cn.sky.luckypillar.listener.*;
 import cn.sky.luckypillar.scoreboard.Scoreboard;
 import cn.sky.luckypillar.utils.WorldUtil;
 import cn.sky.luckypillar.utils.chat.CC;
@@ -162,10 +159,11 @@ public class SkyLuckyPillar extends JavaPlugin {
      * 注册监听器
      */
     private void registerListeners() {
-        getServer().getPluginManager().registerEvents(new PlayerListener(game), this);
-        getServer().getPluginManager().registerEvents(new BlockListener(game), this);
-        getServer().getPluginManager().registerEvents(new DamageListener(game, skyConfig), this);
-        getServer().getPluginManager().registerEvents(new ChatListener(game, skyConfig), this);
+        Bukkit.getPluginManager().registerEvents(new PlayerListener(game), this);
+        Bukkit.getPluginManager().registerEvents(new BlockListener(game), this);
+        Bukkit.getPluginManager().registerEvents(new DamageListener(game, skyConfig), this);
+        Bukkit.getPluginManager().registerEvents(new ChatListener(game, skyConfig), this);
+        Bukkit.getPluginManager().registerEvents(new GameListener(), this);
 
         CC.send("&f已注册 &b4 &f个事件监听器");
     }

@@ -4,6 +4,7 @@ import cn.sky.luckypillar.game.LuckyPillarGame;
 import cn.sky.luckypillar.config.SkyConfig;
 import cn.sky.luckypillar.utils.chat.CC;
 import lombok.Getter;
+import lombok.ToString;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -14,6 +15,7 @@ import java.util.*;
  * 负责注册、触发和管理游戏事件
  */
 @Getter
+@ToString
 public class EventManager {
     
     private final JavaPlugin plugin;

@@ -81,6 +81,6 @@ public class BlockDecayEvent implements GameEvent {
     @Override
     public void announce(LuckyPillarGame game) {
         game.broadcast("&c&l[事件] 方块衰减！");
-        game.broadcast("&e平台正在崩塌，小心脚下！");
+        game.broadcast("&e平台正在崩塌 小心脚下！");
     }
 }

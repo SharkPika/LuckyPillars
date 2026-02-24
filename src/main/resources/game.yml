@@ -22,9 +22,6 @@ pillars:
 items:
   # 禁止物品列表
   ban-list:
-    - "AIR"
-    - "WATER"
-    - "LAVA"
     - "BARRIER"
 
 # 事件系统配置

@@ -74,7 +74,7 @@ public class LavaRiseEvent implements GameEvent {
     @Override
     public void announce(LuckyPillarGame game) {
         game.broadcast("&c&l[事件] 岩浆上升！");
-        game.broadcast("&e岩浆正在从底部上升，快往高处跑！");
+        game.broadcast("&e岩浆正在从底部上升 快往高处跑！");
     }
     
     /**

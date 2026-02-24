@@ -8,6 +8,7 @@ import cn.sky.luckypillar.game.LuckyPillarGame;
 import cn.sky.luckypillar.pillar.Pillar;
 import cn.sky.luckypillar.state.GameState;
 import cn.sky.luckypillar.utils.chat.CC;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
@@ -47,6 +48,7 @@ public class LuckyPillarCommand implements CommandExecutor {
             case "leave" -> handleLeave(sender);
             case "setup" -> handleSetup(sender, args);
             case "event" -> handleEvent(sender, args);
+            case "debug" -> handleDebug(sender, args);
             case "reload" -> handleReload(sender);
             default -> sendHelp(sender);
         }
@@ -234,8 +236,16 @@ public class LuckyPillarCommand implements CommandExecutor {
                     return;
                 }
                 String id = args[2];
+                if (id.equalsIgnoreCase("current")) {
+                    if (eventScheduler.getSchedulerTask() == null) {
+                        CC.send(sender, "&c事件调度器没有启动");
+                        return;
+                    }
+                    eventScheduler.triggerEventNow();
+                    return;
+                }
                 GameEvent event = eventManager.getRegisteredEvents().get(id);
-                if (id.equals("random")) {
+                if (id.equalsIgnoreCase("random")) {
                     event = eventManager.selectRandomEvent();
                 }
                 if (event == null) {
@@ -284,6 +294,42 @@ public class LuckyPillarCommand implements CommandExecutor {
     }
 
     /**
+     * 处理 debug 命令
+     */
+    private void handleDebug(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            CC.send(sender, "&c用法: /pillar debug <game|events|player> [option]");
+            return;
+        }
+        String target = args[1].toLowerCase();
+
+        switch (target) {
+            case "game" -> {
+                CC.send(sender, game.toString());
+                System.out.println(game);
+            }
+            case "events" -> {
+                CC.send(sender, game.getEventScheduler().getEventManager().toString());
+                System.out.println(game.getEventScheduler().getEventManager());
+            }
+            case "player" -> {
+                if (args.length < 3) {
+                    CC.send(sender, "&c用法: /pillar debug player <player>");
+                    return;
+                }
+                String playerName = args[2];
+                Player player = Bukkit.getServer().getPlayer(playerName);
+                if (player == null || !player.isOnline()) {
+                    CC.send(sender, "&c玩家不存在: " + playerName);
+                    return;
+                }
+                CC.send(sender, game.getPlayer(player.getUniqueId()) == null ? "&c玩家不存在: " + playerName : game.getPlayer(player.getUniqueId()).toString());
+                System.out.println(game.getPlayer(player.getUniqueId()));
+            }
+        }
+    }
+
+    /**
      * 处理 reload 命令
      */
     private void handleReload(CommandSender sender) {
@@ -320,6 +366,7 @@ public class LuckyPillarCommand implements CommandExecutor {
             CC.send(sender, "&e/pillar event end &7- 强制结束当前事件");
             CC.send(sender, "&e/pillar event reset &7- 重置事件调度器");
             CC.send(sender, "&e/pillar event status &7- 显示当前事件状态");
+            CC.send(sender, "&e/pillar debug <game|events|player> [option] &7- 调试信息");
             CC.send(sender, "&e/pillar reload &7- 重新加载配置");
         }
     }

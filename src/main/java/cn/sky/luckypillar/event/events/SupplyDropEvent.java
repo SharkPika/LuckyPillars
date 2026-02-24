@@ -70,7 +70,7 @@ public class SupplyDropEvent implements GameEvent {
     @Override
     public void announce(LuckyPillarGame game) {
         game.broadcast("&a&l[事件] 空投补给！");
-        game.broadcast("&e补给箱正在投放，快去寻找！");
+        game.broadcast("&e补给箱正在投放 快去寻找！");
     }
     
     /**
