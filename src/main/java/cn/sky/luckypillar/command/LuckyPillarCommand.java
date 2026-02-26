@@ -140,6 +140,19 @@ public class LuckyPillarCommand implements CommandExecutor {
         String action = args[1].toLowerCase();
         
         switch (action) {
+            case "enable" -> {
+                if (game.isSetupMode()) {
+                    CC.send(sender, "&c配置模式已开启");
+                    return;
+                }
+                if (!game.getStateManager().isWaiting()) {
+                    CC.send(sender, "&c游戏正在运行中");
+                    return;
+                }
+                game.setSetupMode(true);
+                CC.send(sender, "&a配置模式已开启");
+                Bukkit.getOnlinePlayers().stream().filter(p -> !p.hasPermission("luckypillar.admin")).forEach(p -> p.kickPlayer("§c管理员正在配置地图中 暂时无法开启游戏"));
+            }
             case "add" -> {
                 if (args.length < 3) {
                     CC.send(sender, "&c用法: /pillar setup add <id> <height>");
@@ -198,7 +211,7 @@ public class LuckyPillarCommand implements CommandExecutor {
                 }
                 CC.send(sender, "&e总计: &f" + game.getPillarManager().getPillarCount() + " &e个柱子");
             }
-            default -> CC.send(sender, "&c用法: /pillar setup <add|remove|list> [id]");
+            default -> CC.send(sender, "&c用法: /pillar setup <enable|add|remove|list> [id]");
         }
     }
 
@@ -306,11 +319,11 @@ public class LuckyPillarCommand implements CommandExecutor {
         switch (target) {
             case "game" -> {
                 CC.send(sender, game.toString());
-                System.out.println(game);
+                CC.debug(game.toString());
             }
             case "events" -> {
                 CC.send(sender, game.getEventScheduler().getEventManager().toString());
-                System.out.println(game.getEventScheduler().getEventManager());
+                CC.debug(game.getEventScheduler().getEventManager().toString());
             }
             case "player" -> {
                 if (args.length < 3) {
@@ -324,7 +337,7 @@ public class LuckyPillarCommand implements CommandExecutor {
                     return;
                 }
                 CC.send(sender, game.getPlayer(player.getUniqueId()) == null ? "&c玩家不存在: " + playerName : game.getPlayer(player.getUniqueId()).toString());
-                System.out.println(game.getPlayer(player.getUniqueId()));
+                CC.debug(game.getPlayer(player.getUniqueId()).toString());
             }
         }
     }
@@ -358,6 +371,7 @@ public class LuckyPillarCommand implements CommandExecutor {
             CC.send(sender, "&c管理员命令:");
             CC.send(sender, "&e/pillar start &7- 强制开始游戏");
             CC.send(sender, "&e/pillar stop &7- 停止游戏");
+            CC.send(sender, "&e/pillar setup enable &7- 启动地图配置模式");
             CC.send(sender, "&e/pillar setup add <id> <height> &7- 在当前位置添加柱子");
             CC.send(sender, "&e/pillar setup remove <id> &7- 移除柱子");
             CC.send(sender, "&e/pillar setup list &7- 列出所有柱子");

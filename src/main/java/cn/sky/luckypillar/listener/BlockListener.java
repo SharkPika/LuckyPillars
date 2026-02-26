@@ -27,6 +27,7 @@ public class BlockListener implements Listener {
      */
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
+        if (game.isSetupMode()) return;
         Player player = event.getPlayer();
         LuckyPillarPlayer lpPlayer = game.getPlayer(player);
         
@@ -58,6 +59,7 @@ public class BlockListener implements Listener {
      */
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
+        if (game.isSetupMode()) return;
         Player player = event.getPlayer();
         LuckyPillarPlayer lpPlayer = game.getPlayer(player);
         

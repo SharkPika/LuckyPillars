@@ -27,6 +27,11 @@ public class DamageListener implements Listener {
         if (!(event.getEntity() instanceof Player player)) {
             return;
         }
+
+        if (game.isSetupMode()) {
+            event.setCancelled(true);
+            return;
+        }
         
         LuckyPillarPlayer lpPlayer = game.getPlayer(player);
         if (lpPlayer == null) {
@@ -70,6 +75,10 @@ public class DamageListener implements Listener {
         }
         
         if (!(event.getDamager() instanceof Player attacker)) {
+            return;
+        }
+        if (game.isSetupMode()) {
+            event.setCancelled(true);
             return;
         }
         

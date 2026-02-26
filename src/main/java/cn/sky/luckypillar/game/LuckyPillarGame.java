@@ -55,6 +55,9 @@ public class LuckyPillarGame {
 
     private LuckyPillarItemRunnable gameRunnable;
 
+    @Setter
+    private boolean setupMode;
+
     private UUID winner;
 
     // 玩家数据（使用线程安全的集合）
@@ -116,6 +119,7 @@ public class LuckyPillarGame {
             this.farthest = null;
         }
         this.maxPlayer = this.pillarManager.getPillarCount();
+        this.setupMode = this.maxPlayer == 0;
     }
 
     /**

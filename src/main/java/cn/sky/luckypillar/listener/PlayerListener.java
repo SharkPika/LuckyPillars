@@ -1,5 +1,6 @@
 package cn.sky.luckypillar.listener;
 
+import cn.sky.luckypillar.SkyLuckyPillar;
 import cn.sky.luckypillar.game.LuckyPillarGame;
 import cn.sky.luckypillar.game.LuckyPillarPlayer;
 import cn.sky.luckypillar.state.PlayerState;
@@ -12,6 +13,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.*;
 
 public class PlayerListener implements Listener {
@@ -24,6 +26,12 @@ public class PlayerListener implements Listener {
 
     @EventHandler
     public void onPlayerLogin(PlayerLoginEvent event) {
+        if (game.isSetupMode()) {
+            if (!event.getPlayer().hasPermission("luckypillar.admin")) {
+                event.disallow(PlayerLoginEvent.Result.KICK_OTHER, "§c管理员正在配置地图中");
+            }
+            return;
+        }
         if ((game.getStateManager().isWaiting() || game.getStateManager().isStarting()) && Bukkit.getOnlinePlayers().size() >= game.getMaxPlayer()) {
             event.disallow(PlayerLoginEvent.Result.KICK_FULL, "§c房间人数已满");
         }
@@ -32,6 +40,7 @@ public class PlayerListener implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         event.setJoinMessage(null);
+        if (game.isSetupMode()) return;
         Player player = event.getPlayer();
         player.getInventory().clear();
         LuckyPillarPlayer lpPlayer = game.getPlayer(player);
@@ -56,6 +65,7 @@ public class PlayerListener implements Listener {
 
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
+        if (game.isSetupMode()) return;
         Player player = event.getPlayer();
         LuckyPillarPlayer lpPlayer = game.getPlayer(player);
 
@@ -108,7 +118,20 @@ public class PlayerListener implements Listener {
     }
 
     @EventHandler
+    public void onPlayerDead(PlayerDeathEvent event) {
+        Player player = event.getEntity();
+        Bukkit.getScheduler().runTaskLater(SkyLuckyPillar.getInstance(), () -> {
+            player.spigot().respawn();
+            if (game.getCenter() != null) {
+                player.teleport(game.getCenter());
+            }
+        }, 1L);
+
+    }
+
+    @EventHandler
     public void onPlayerRespawn(PlayerRespawnEvent event) {
+        if (game.isSetupMode()) return;
         Player player = event.getPlayer();
         LuckyPillarPlayer lpPlayer = game.getPlayer(player);
         
@@ -119,6 +142,7 @@ public class PlayerListener implements Listener {
 
     @EventHandler
     public void onPlayerDropItem(PlayerDropItemEvent event) {
+        if (game.isSetupMode()) return;
         Player player = event.getPlayer();
         LuckyPillarPlayer lpPlayer = game.getPlayer(player);
 
@@ -129,6 +153,7 @@ public class PlayerListener implements Listener {
 
     @EventHandler
     public void onPlayerPickupItem(PlayerPickupItemEvent event) {
+        if (game.isSetupMode()) return;
         Player player = event.getPlayer();
         LuckyPillarPlayer lpPlayer = game.getPlayer(player);
         
@@ -139,6 +164,7 @@ public class PlayerListener implements Listener {
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
+        if (game.isSetupMode()) return;
         Player player = event.getPlayer();
 
         LuckyPillarPlayer lpPlayer = game.getPlayer(player);
