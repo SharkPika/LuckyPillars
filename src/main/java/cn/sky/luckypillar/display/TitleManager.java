@@ -1,24 +1,22 @@
 package cn.sky.luckypillar.display;
 
+import cn.sky.luckypillar.config.SkyConfig;
 import cn.sky.luckypillar.game.LuckyPillarGame;
 import cn.sky.luckypillar.game.LuckyPillarPlayer;
-import cn.sky.luckypillar.config.SkyConfig;
 import cn.sky.luckypillar.utils.chat.CC;
+import cn.sky.luckypillar.utils.chat.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.java.JavaPlugin;
 
 /**
  * 标题管理器
  */
 public class TitleManager {
 
-    private final JavaPlugin plugin;
     private final LuckyPillarGame game;
     private final SkyConfig skyConfig;
 
-    public TitleManager(JavaPlugin plugin, LuckyPillarGame game, SkyConfig skyConfig) {
-        this.plugin = plugin;
+    public TitleManager(LuckyPillarGame game, SkyConfig skyConfig) {
         this.game = game;
         this.skyConfig = skyConfig;
     }
@@ -30,7 +28,8 @@ public class TitleManager {
         String title = CC.translate(skyConfig.getTitleGameStartTitle());
         String subtitle = CC.translate(skyConfig.getTitleGameStartSubtitle());
 
-        player.sendTitle(
+        Title.sendTitle(
+                player,
                 title,
                 subtitle,
                 skyConfig.getTitleGameStartFadeIn(),
@@ -47,7 +46,8 @@ public class TitleManager {
         String subtitle = CC.translate(skyConfig.getTitlePlayerKilledSubtitle()
                 .replace("%killer%", killerName));
 
-        player.sendTitle(
+        Title.sendTitle(
+                player,
                 title,
                 subtitle,
                 skyConfig.getTitlePlayerKilledFadeIn(),
@@ -63,7 +63,8 @@ public class TitleManager {
         String title = CC.translate(skyConfig.getTitleVictoryTitle());
         String subtitle = CC.translate(skyConfig.getTitleVictorySubtitle());
 
-        player.sendTitle(
+        Title.sendTitle(
+                player,
                 title,
                 subtitle,
                 skyConfig.getTitleVictoryFadeIn(),
@@ -82,7 +83,8 @@ public class TitleManager {
                 .replace("%winner%", game.getPlayer(game.getWinner()).getName()));
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (player.getUniqueId().equals(game.getPlayer(game.getWinner()).getBukkitPlayer().getUniqueId())) continue;
-            player.sendTitle(
+            Title.sendTitle(
+                    player,
                     title,
                     subtitle,
                     skyConfig.getTitleGameOverFadeIn(),
@@ -101,7 +103,8 @@ public class TitleManager {
         String subtitle = CC.translate(skyConfig.getTitleEventStartSubtitle()
                 .replace("%event_name%", eventName));
 
-        player.sendTitle(
+        Title.sendTitle(
+                player,
                 title,
                 subtitle,
                 skyConfig.getTitleEventStartFadeIn(),
@@ -136,6 +139,6 @@ public class TitleManager {
      * 清除玩家标题
      */
     public void clearTitle(Player player) {
-        player.sendTitle("", "", 0, 0, 0);
+        Title.sendTitle(player, "", "", 0, 0, 0);
     }
 }

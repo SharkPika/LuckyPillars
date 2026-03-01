@@ -53,6 +53,7 @@ public class CC {
         if (message != null) {
             console.sendMessage(CC.translate(message));
         }
+        e.printStackTrace();
         console.sendMessage(CC.translate("&c" + e.getMessage()));
         for (StackTraceElement element : e.getStackTrace()) {
             console.sendMessage(CC.translate("&cAt " + element));

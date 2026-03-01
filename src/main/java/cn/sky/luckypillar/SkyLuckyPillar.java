@@ -14,6 +14,7 @@ import cn.sky.luckypillar.scoreboard.Scoreboard;
 import cn.sky.luckypillar.utils.WorldUtil;
 import cn.sky.luckypillar.utils.chat.CC;
 import cn.sky.luckypillar.utils.scoreboard.Assemble;
+import cn.sky.luckypillar.utils.version.VersionManager;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -44,12 +45,15 @@ public class SkyLuckyPillar extends JavaPlugin {
     @Override
     public void onLoad() {
         instance = this;
-        skyConfig = new SkyConfig(this);
-        gameConfig = new LuckyPillarConfig(this);
+
+        VersionManager.init();
+
+        this.skyConfig = new SkyConfig(this);
+        this.gameConfig = new LuckyPillarConfig(this);
 
         try {
-            skyConfig.onLoad();
-            gameConfig.onLoad();
+            this.skyConfig.onLoad();
+            this.gameConfig.onLoad();
         } catch (Exception e) {
             CC.send("&c配置加载失败", e);
             Bukkit.getServer().getPluginManager().disablePlugin(this);
@@ -61,53 +65,53 @@ public class SkyLuckyPillar extends JavaPlugin {
     @Override
     public void onEnable() {
         // 初始化游戏
-        game = new LuckyPillarGame(this, gameConfig, skyConfig);
+        this.game = new LuckyPillarGame(this, this.gameConfig, this.skyConfig);
 
         // 初始化显示管理器
-        bossBarManager = new BossBarManager(this, game, skyConfig);
-        titleManager = new TitleManager(this, game, skyConfig);
+        this.bossBarManager = new BossBarManager(this, this.game, this.skyConfig);
+        this.titleManager = new TitleManager(this.game, this.skyConfig);
 
-        game.setBossBarManager(bossBarManager);
-        game.setTitleManager(titleManager);
+        this.game.setBossBarManager(this.bossBarManager);
+        this.game.setTitleManager(this.titleManager);
 
         // 初始化事件系统
-        eventManager = new EventManager(this, game, skyConfig);
-        eventScheduler = new EventScheduler(this, game, eventManager, gameConfig);
+        this.eventManager = new EventManager(this, this.game, this.skyConfig);
+        this.eventScheduler = new EventScheduler(this, this.game, this.eventManager, this.gameConfig);
 
         // 将事件调度器注入到游戏中
-        game.setEventScheduler(eventScheduler);
+        this.game.setEventScheduler(this.eventScheduler);
 
         // 注册游戏事件
-        registerGameEvents();
+        this.registerGameEvents();
 
         // 注册监听器
-        registerListeners();
+        this.registerListeners();
 
         // 注册命令
-        registerCommands();
+        this.registerCommands();
 
-        scoreboard = new Scoreboard(game, skyConfig);
-        assemble = new Assemble(this, scoreboard);
-        assemble.setTicks(4);
+        this.scoreboard = new Scoreboard(this.game, this.skyConfig);
+        this.assemble = new Assemble(this, this.scoreboard);
+        this.assemble.setTicks(4);
 
         CC.send("&bSkyLuckyPillar &a插件加载成功");
-        CC.send("&f游戏地图: &e" + gameConfig.getMapName());
-        CC.send("&f柱子数量: &e" + game.getPillarManager().getPillarCount());
+        CC.send("&f游戏地图: &e" + this.gameConfig.getMapName());
+        CC.send("&f柱子数量: &e" + this.game.getPillarManager().getPillarCount());
         CC.send("&f作者 &bpi_ka");
     }
 
     @Override
     public void onDisable() {
-        if (assemble != null) {
-            assemble.cleanup();
+        if (this.assemble != null) {
+            this.assemble.cleanup();
         }
 
-        if (eventScheduler != null) {
-            eventScheduler.stop();
+        if (this.eventScheduler != null) {
+            this.eventScheduler.stop();
         }
 
-        if (eventManager != null) {
-            eventManager.cleanup();
+        if (this.eventManager != null) {
+            this.eventManager.cleanup();
         }
 
         Bukkit.getScheduler().cancelTasks(this);
@@ -119,14 +123,19 @@ public class SkyLuckyPillar extends JavaPlugin {
     private void loadMap() {
         CC.send("加载地图...");
         try {
-            File configWorld = new File(this.getDataFolder().getPath() + "/" + gameConfig.getMapName());
+            File configWorld = new File(this.getDataFolder().getPath() + "/" + this.gameConfig.getMapName());
+            File world = new File("./" + this.gameConfig.getMapName());
             if (!configWorld.exists() || configWorld.listFiles().length == 0) {
                 configWorld.mkdirs();
-                Files.delete(new File("./" + gameConfig.getMapName()).toPath());
-                WorldUtil.copyDir("./" + gameConfig.getMapName(), configWorld.getPath());
+                if (world.exists() || world.listFiles().length > 0) {
+                    WorldUtil.copyDir(world.getPath(), configWorld.getPath());
+                    CC.send("&a地图加载成功");
+                } else {
+                    CC.warn("&c无法找到任何有效地图");
+                }
                 return;
             }
-            for (File file : configWorld.listFiles()) {
+            /*for (File file : configWorld.listFiles()) {
                 File file2;
                 String[] split = file.getPath().split("/");
                 if (split.length == 1) {
@@ -134,48 +143,50 @@ public class SkyLuckyPillar extends JavaPlugin {
                 }
                 if (!(file2 = new File("./" + split[split.length - 1])).isDirectory()) continue;
                 WorldUtil.deleteDir(file2);
-            }
-            WorldUtil.copyDir(configWorld.getPath(), "./" + gameConfig.getMapName());
+            }*/
+            Files.deleteIfExists(world.toPath());
+            world.mkdirs();
+            WorldUtil.copyDir(configWorld.getPath(), world.getPath());
+            CC.send("&a地图加载成功");
         } catch (Throwable e) {
             CC.sendError("&f加载世界错误: ", e);
         }
-        CC.send("&a地图加载成功");
     }
 
     /**
      * 注册游戏事件
      */
     private void registerGameEvents() {
-        eventManager.registerEvent("monster-frenzy", new MonsterFrenzyEvent(gameConfig));
-        eventManager.registerEvent("arrow-rain", new ArrowRainEvent(gameConfig));
-        eventManager.registerEvent("lava-rise", new LavaRiseEvent(gameConfig));
-        eventManager.registerEvent("block-decay", new BlockDecayEvent(gameConfig));
-        //eventManager.registerEvent("supply-drop", new SupplyDropEvent(gameConfig));
+        this.eventManager.registerEvent("monster-frenzy", new MonsterFrenzyEvent(this.gameConfig));
+        this.eventManager.registerEvent("arrow-rain", new ArrowRainEvent(this.gameConfig));
+        this.eventManager.registerEvent("lava-rise", new LavaRiseEvent(this.gameConfig));
+        this.eventManager.registerEvent("block-decay", new BlockDecayEvent(this.gameConfig));
+        //this.eventManager.registerEvent("supply-drop", new SupplyDropEvent(gameConfig));
 
-        CC.send("&f已注册 &b" + eventManager.getRegisteredEvents().size() + " &f个游戏事件");
+        CC.send("&f已注册 &b" + this.eventManager.getRegisteredEvents().size() + " &f个游戏事件");
     }
 
     /**
      * 注册监听器
      */
     private void registerListeners() {
-        Bukkit.getPluginManager().registerEvents(new PlayerListener(game), this);
-        Bukkit.getPluginManager().registerEvents(new BlockListener(game), this);
-        Bukkit.getPluginManager().registerEvents(new DamageListener(game, skyConfig), this);
-        Bukkit.getPluginManager().registerEvents(new ChatListener(game, skyConfig), this);
+        Bukkit.getPluginManager().registerEvents(new PlayerListener(this.game), this);
+        Bukkit.getPluginManager().registerEvents(new BlockListener(this.game), this);
+        Bukkit.getPluginManager().registerEvents(new DamageListener(this.game, this.skyConfig), this);
+        Bukkit.getPluginManager().registerEvents(new ChatListener(this.game, this.skyConfig), this);
         Bukkit.getPluginManager().registerEvents(new GameListener(), this);
 
-        CC.send("&f已注册 &b4 &f个事件监听器");
+        CC.send("&f已注册 &b5 &f个事件监听器");
     }
 
     /**
      * 注册命令
      */
     private void registerCommands() {
-        LuckyPillarCommand commandExecutor = new LuckyPillarCommand(game, skyConfig);
-        getCommand("luckypillar").setExecutor(commandExecutor);
-        getCommand("lpillar").setExecutor(commandExecutor);
-        getCommand("pillar").setExecutor(commandExecutor);
+        LuckyPillarCommand commandExecutor = new LuckyPillarCommand(this.game, this.skyConfig);
+        this.getCommand("luckypillar").setExecutor(commandExecutor);
+        this.getCommand("lpillar").setExecutor(commandExecutor);
+        this.getCommand("pillar").setExecutor(commandExecutor);
 
         CC.send("&f已注册命令: &a/luckypillar, /lpillar, /pillar");
     }
