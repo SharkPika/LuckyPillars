@@ -135,9 +135,6 @@ public class DamageListener implements Listener {
             if (killerPlayer != null) {
                 killerPlayer.addKill();
 
-                // 击杀奖励：回复生命值
-                killer.setHealth(Math.min(20.0, killer.getHealth() + 4.0));
-
                 // 击杀音效和粒子效果
                 VersionCompat.playKillSound(killer);
                 VersionCompat.spawnCritParticle(killer.getLocation().add(0, 1, 0), 20);
