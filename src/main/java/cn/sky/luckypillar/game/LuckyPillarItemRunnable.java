@@ -10,15 +10,25 @@ import java.util.Random;
 
 public class LuckyPillarItemRunnable extends BukkitRunnable {
 
-    private static final Random random = new Random();
-    private static final Material[] filter = Arrays.stream(Material.values()).filter(m -> m.isItem() && !SkyLuckyPillar.getInstance().getGame().getConfig().getBanList().contains(m.name())).toArray(Material[]::new);
+    private static final Random RANDOM = new Random();
 
     @Override
     public void run() {
         LuckyPillarGame game = SkyLuckyPillar.getInstance().getGame();
+        Material[] available = Arrays.stream(Material.values())
+                .filter(Material::isItem)
+                .filter(material -> !game.getConfig().getBanList().contains(material.name()))
+                .toArray(Material[]::new);
+
+        if (available.length == 0) {
+            return;
+        }
+
         for (LuckyPillarPlayer player : game.getAlivePlayers()) {
-            if (player.getBukkitPlayer().getInventory().firstEmpty() == -1) continue;
-            player.giveItem(new ItemStack(filter[random.nextInt(filter.length)]));
+            if (player.getBukkitPlayer().getInventory().firstEmpty() == -1) {
+                continue;
+            }
+            player.giveItem(new ItemStack(available[RANDOM.nextInt(available.length)]));
         }
     }
 }

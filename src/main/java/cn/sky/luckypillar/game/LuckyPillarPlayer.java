@@ -5,9 +5,7 @@ import cn.sky.luckypillar.pillar.Pillar;
 import cn.sky.luckypillar.state.PlayerState;
 import cn.sky.luckypillar.utils.chat.CC;
 import lombok.Data;
-import lombok.Setter;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -18,27 +16,21 @@ import java.util.UUID;
 public class LuckyPillarPlayer {
 
     private final UUID uuid;
-
     private final String name;
-
     private final Player bukkitPlayer;
 
     private PlayerState state;
-
     private Pillar assignedPillar;
 
     private int kills;
-
     private int deaths;
-
+    private int killStreak;
     private long survivalTime;
 
     private Location lastLocation;
-
     private boolean ready;
-
     private long gameStartTime;
-    
+
     public LuckyPillarPlayer(Player player) {
         this.uuid = player.getUniqueId();
         this.name = player.getName();
@@ -46,6 +38,7 @@ public class LuckyPillarPlayer {
         this.state = PlayerState.WAITING;
         this.kills = 0;
         this.deaths = 0;
+        this.killStreak = 0;
         this.survivalTime = 0;
         this.ready = false;
     }
@@ -61,9 +54,11 @@ public class LuckyPillarPlayer {
         LuckyPillarGame game = SkyLuckyPillar.getInstance().getGame();
         Pillar pillar = game.getPillarManager().getAvailablePillar();
         if (pillar == null) {
-            CC.warn("&c柱子数量不足！需要 " + game.getPlayers().size() + " 个，但只有 " + game.getPillarManager().getPillars().size() + " 个");
+            CC.warn("&c柱子数量不足！需要 " + game.getPlayers().size() + " 个，但只有 "
+                    + game.getPillarManager().getPillars().size() + " 个");
             return null;
         }
+
         this.assignedPillar = pillar;
         pillar.assignPlayer(this.uuid);
         CC.send("&f玩家 &e" + bukkitPlayer.getName() + " &f被分配到柱子 &b" + pillar.getId());
@@ -72,10 +67,15 @@ public class LuckyPillarPlayer {
 
     public void addKill() {
         this.kills++;
+        this.killStreak++;
     }
 
     public void addDeath() {
         this.deaths++;
+    }
+
+    public void resetKillStreak() {
+        this.killStreak = 0;
     }
 
     public void reset() {
@@ -83,6 +83,7 @@ public class LuckyPillarPlayer {
         this.assignedPillar = null;
         this.kills = 0;
         this.deaths = 0;
+        this.killStreak = 0;
         this.survivalTime = 0;
         this.ready = false;
         this.gameStartTime = 0;
@@ -90,7 +91,7 @@ public class LuckyPillarPlayer {
 
     public void sendMessage(String message) {
         if (bukkitPlayer != null && bukkitPlayer.isOnline()) {
-            bukkitPlayer.sendMessage(message);
+            CC.send(bukkitPlayer, message);
         }
     }
 

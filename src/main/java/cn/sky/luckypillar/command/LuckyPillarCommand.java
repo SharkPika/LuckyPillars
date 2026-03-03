@@ -5,10 +5,12 @@ import cn.sky.luckypillar.event.EventManager;
 import cn.sky.luckypillar.event.EventScheduler;
 import cn.sky.luckypillar.event.GameEvent;
 import cn.sky.luckypillar.game.LuckyPillarGame;
+import cn.sky.luckypillar.game.LuckyPillarPlayer;
 import cn.sky.luckypillar.pillar.Pillar;
 import cn.sky.luckypillar.state.GameState;
 import cn.sky.luckypillar.utils.chat.CC;
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
@@ -18,29 +20,24 @@ import org.bukkit.entity.Player;
 
 import java.util.HashMap;
 
-/**
- * SkyLuckyPillar 主命令处理器
- * 命令: /luckypillar 或 /pillar
- */
 public class LuckyPillarCommand implements CommandExecutor {
-    
+
     private final LuckyPillarGame game;
     private final SkyConfig skyConfig;
-    
+
     public LuckyPillarCommand(LuckyPillarGame game, SkyConfig skyConfig) {
         this.game = game;
         this.skyConfig = skyConfig;
     }
-    
+
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args.length == 0) {
             sendHelp(sender);
             return true;
         }
-        
+
         String subCommand = args[0].toLowerCase();
-        
         switch (subCommand) {
             case "start" -> handleStart(sender);
             case "stop" -> handleStop(sender);
@@ -52,13 +49,9 @@ public class LuckyPillarCommand implements CommandExecutor {
             case "reload" -> handleReload(sender);
             default -> sendHelp(sender);
         }
-        
         return true;
     }
-    
-    /**
-     * 处理 start 命令
-     */
+
     private void handleStart(CommandSender sender) {
         if (!sender.hasPermission("luckypillar.admin")) {
             CC.send(sender, skyConfig.format(skyConfig.getNoPermission(), new HashMap<>()));
@@ -66,125 +59,149 @@ public class LuckyPillarCommand implements CommandExecutor {
         }
 
         game.getStateManager().changeState(GameState.STARTING);
-        CC.send(sender, "&a游戏已强制开始！");
+        CC.send(sender, "&a已强制开始游戏");
     }
-    
-    /**
-     * 处理 stop 命令
-     */
+
     private void handleStop(CommandSender sender) {
         if (!sender.hasPermission("luckypillar.admin")) {
             CC.send(sender, skyConfig.format(skyConfig.getNoPermission(), new HashMap<>()));
             return;
         }
-        
+
         game.stopGame();
-        CC.send(sender, "&a游戏已停止！");
+        CC.send(sender, "&a已停止游戏");
     }
-    
-    /**
-     * 处理 join 命令
-     */
+
     private void handleJoin(CommandSender sender) {
         if (!(sender instanceof Player player)) {
-            CC.send(sender, "&c只有玩家可以执行此命令！");
+            CC.send(sender, "&c该命令仅玩家可用");
             return;
         }
-        
-        if (game.addPlayer(player)) {
-            CC.send(sender, "&a你已加入游戏！");
+
+        GameState state = game.getStateManager().getCurrentState();
+        boolean canJoinAsReady = (state == GameState.WAITING || state == GameState.STARTING)
+                && game.getPlayers().size() < game.getMaxPlayer();
+
+        if (canJoinAsReady) {
+            if (game.addPlayer(player)) {
+                CC.send(sender, "&a你已加入准备队列");
+                return;
+            }
+            CC.send(sender, "&c加入游戏失败 请稍后重试");
+            return;
         }
+
+        if (game.addQueuedSpectator(player)) {
+            CC.send(sender, "&e房间已满或游戏进行中 你已进入旁观队列");
+            return;
+        }
+        CC.send(sender, "&c加入游戏失败 请稍后重试");
     }
-    
-    /**
-     * 处理 leave 命令
-     */
+
     private void handleLeave(CommandSender sender) {
         if (!(sender instanceof Player player)) {
-            CC.send(sender, "&c只有玩家可以执行此命令！");
+            CC.send(sender, "&c该命令仅玩家可用");
             return;
         }
 
         if (game.getStateManager().isEnding()) {
-            CC.send(sender, "&c游戏已结束 无法离开");
+            CC.send(sender, "&c游戏正在结束阶段 暂时不能退出");
             return;
         }
 
-        game.removePlayer(player);
-        game.respawnAsSpectator(game.getPlayer(player));
-        if (!game.getStateManager().isGameRunning()) {
+        if (game.isInGame(player)) {
+            game.removePlayer(player);
             game.getPlayers().remove(player.getUniqueId());
+
+            player.setGameMode(GameMode.SURVIVAL);
+            player.setAllowFlight(false);
+            player.setFlying(false);
+
+            CC.send(sender, "&a你已退出本局游戏");
+            return;
         }
-        CC.send(sender, "&a你已离开游戏！");
+
+        if (game.isSpectator(player)) {
+            game.removeSpectator(player.getUniqueId());
+            player.setGameMode(GameMode.SURVIVAL);
+            player.setAllowFlight(false);
+            player.setFlying(false);
+            CC.send(sender, "&a你已退出旁观队列");
+            return;
+        }
+
+        CC.send(sender, "&e你当前不在本局游戏中");
     }
-    
-    /**
-     * 处理 setup 命令
-     */
+
     private void handleSetup(CommandSender sender, String[] args) {
         if (!sender.hasPermission("luckypillar.admin")) {
             CC.send(sender, skyConfig.format(skyConfig.getNoPermission(), new HashMap<>()));
             return;
         }
-        
+
         if (!(sender instanceof Player player)) {
-            CC.send(sender, "&c只有玩家可以执行此命令！");
+            CC.send(sender, "&c该命令仅玩家可用");
             return;
         }
-        
+
         if (args.length < 2) {
-            CC.send(sender, "&c用法: /pillar setup <add|remove|list> [id]");
+            CC.send(sender, "&c用法: /pillar setup <enable|add|remove|list>");
             return;
         }
-        
+
         String action = args[1].toLowerCase();
-        
         switch (action) {
             case "enable" -> {
                 if (game.isSetupMode()) {
-                    CC.send(sender, "&c配置模式已开启");
+                    CC.send(sender, "&c搭建模式已开启");
                     return;
                 }
                 if (!game.getStateManager().isWaiting()) {
-                    CC.send(sender, "&c游戏正在运行中");
+                    CC.send(sender, "&c仅可在等待状态开启搭建模式");
                     return;
                 }
+
                 game.setSetupMode(true);
-                CC.send(sender, "&a配置模式已开启");
-                Bukkit.getOnlinePlayers().stream().filter(p -> !p.hasPermission("luckypillar.admin")).forEach(p -> p.kickPlayer("§c管理员正在配置地图中 暂时无法开启游戏"));
+                CC.send(sender, "&a已开启搭建模式");
+                Bukkit.getOnlinePlayers().stream()
+                        .filter(p -> !p.hasPermission("luckypillar.admin"))
+                        .forEach(p -> p.kickPlayer("管理员正在搭建地图 请稍后再试"));
             }
             case "add" -> {
-                if (args.length < 3) {
+                if (args.length < 4) {
                     CC.send(sender, "&c用法: /pillar setup add <id> <height>");
                     return;
                 }
-                
+
                 String id = args[2];
                 int height;
                 try {
                     height = Integer.parseInt(args[3]);
                 } catch (NumberFormatException e) {
-                    CC.send("&c设置柱子高度只能使用整数");
-                    throw new IllegalArgumentException("设置柱子高度只能使用整数");
+                    CC.send(sender, "&c高度必须是整数");
+                    return;
+                }
+
+                if (height <= 0) {
+                    CC.send(sender, "&c高度必须大于 0");
+                    return;
                 }
 
                 Location loc = player.getLocation();
-                
                 Location topLoc = loc.clone();
                 Location bottomLoc = loc.clone();
                 bottomLoc.setY(bottomLoc.getBlockY() - height);
 
                 Pillar pillar = new Pillar(
-                    id,
-                    topLoc,
-                    bottomLoc,
-                    height,
-                    game.getConfig().getDefaultPlatformSize(),
-                    Material.valueOf(game.getConfig().getDefaultPlatformMaterial())
+                        id,
+                        topLoc,
+                        bottomLoc,
+                        height,
+                        game.getConfig().getDefaultPlatformSize(),
+                        Material.valueOf(game.getConfig().getDefaultPlatformMaterial())
                 );
-                
+
                 game.getPillarManager().addPillar(pillar);
-                
                 HashMap<String, String> placeholders = new HashMap<>();
                 placeholders.put("id", id);
                 CC.send(sender, skyConfig.format(skyConfig.getPillarAdded(), placeholders));
@@ -194,14 +211,14 @@ public class LuckyPillarCommand implements CommandExecutor {
                     CC.send(sender, "&c用法: /pillar setup remove <id>");
                     return;
                 }
-                
+
                 String id = args[2];
                 if (game.getPillarManager().removePillar(id)) {
                     HashMap<String, String> placeholders = new HashMap<>();
                     placeholders.put("id", id);
                     CC.send(sender, skyConfig.format(skyConfig.getPillarRemoved(), placeholders));
                 } else {
-                    CC.send(sender, "&c柱子不存在: " + id);
+                    CC.send(sender, "&c未找到柱子: " + id);
                 }
             }
             case "list" -> {
@@ -209,15 +226,12 @@ public class LuckyPillarCommand implements CommandExecutor {
                 for (Pillar pillar : game.getPillarManager().getPillars()) {
                     CC.send(sender, "&7- &f" + pillar.getId() + " &7(高度: " + pillar.getHeight() + ")");
                 }
-                CC.send(sender, "&e总计: &f" + game.getPillarManager().getPillarCount() + " &e个柱子");
+                CC.send(sender, "&e总数: &f" + game.getPillarManager().getPillarCount());
             }
-            default -> CC.send(sender, "&c用法: /pillar setup <enable|add|remove|list> [id]");
+            default -> CC.send(sender, "&c用法: /pillar setup <enable|add|remove|list>");
         }
     }
 
-     /**
-     * 处理 event 命令
-     */
     private void handleEvent(CommandSender sender, String[] args) {
         if (!sender.hasPermission("luckypillar.admin")) {
             CC.send(sender, skyConfig.format(skyConfig.getNoPermission(), new HashMap<>()));
@@ -230,46 +244,49 @@ public class LuckyPillarCommand implements CommandExecutor {
         }
 
         if (!game.getStateManager().isGameRunning()) {
-            CC.send(sender, "&c游戏不在运行中 无法操作事件");
+            CC.send(sender, "&c当前游戏未进行 无法操作事件");
             return;
         }
 
         EventScheduler eventScheduler = game.getEventScheduler();
-        EventManager eventManager = game.getEventScheduler().getEventManager();
+        EventManager eventManager = eventScheduler.getEventManager();
         String action = args[1].toLowerCase();
+
         switch (action) {
             case "start" -> {
                 if (args.length < 3) {
                     if (eventScheduler.getSchedulerTask() != null) {
-                        CC.send(sender, "&c事件调度器没有停止");
+                        CC.send(sender, "&c事件调度器已在运行");
                         return;
                     }
                     eventScheduler.start();
                     CC.send(sender, "&a事件调度器已启动");
                     return;
                 }
+
                 String id = args[2];
                 if (id.equalsIgnoreCase("current")) {
                     if (eventScheduler.getSchedulerTask() == null) {
-                        CC.send(sender, "&c事件调度器没有启动");
+                        CC.send(sender, "&c事件调度器未启动");
                         return;
                     }
                     eventScheduler.triggerEventNow();
                     return;
                 }
-                GameEvent event = eventManager.getRegisteredEvents().get(id);
-                if (id.equalsIgnoreCase("random")) {
-                    event = eventManager.selectRandomEvent();
-                }
+
+                GameEvent event = id.equalsIgnoreCase("random")
+                        ? eventManager.selectRandomEvent()
+                        : eventManager.getRegisteredEvents().get(id);
+
                 if (event == null) {
-                    CC.send(sender, "&c事件不存在: " + id);
+                    CC.send(sender, "&c未找到事件: " + id);
                     return;
                 }
                 eventManager.startEvent(event, true);
             }
             case "stop" -> {
                 if (eventScheduler.getSchedulerTask() == null) {
-                    CC.send(sender, "&c事件调度器没有启动");
+                    CC.send(sender, "&c事件调度器未启动");
                     return;
                 }
                 eventScheduler.stop();
@@ -277,45 +294,49 @@ public class LuckyPillarCommand implements CommandExecutor {
             }
             case "end" -> {
                 if (!eventManager.isEventActive()) {
-                    CC.send(sender, "&c没有正在进行的事件");
+                    CC.send(sender, "&c当前没有进行中的事件");
                     return;
                 }
                 eventManager.stopCurrentEvent();
-                CC.send(sender, "&c当前事件已结束");
+                CC.send(sender, "&a已结束当前事件");
             }
             case "reset" -> {
                 eventScheduler.reset();
                 CC.send(sender, "&6事件调度器已重置");
             }
             case "status" -> {
-                CC.send(sender, "&e=== 当前事件状态 ===");
+                CC.send(sender, "&e=== 事件状态 ===");
                 if (eventManager.isEventActive()) {
-                    CC.send(sender, "&7- &f" + eventManager.getCurrentEvent().getName() + " &7(持续时间: " + eventManager.getEventTickCounter() + " 秒)");
+                    CC.send(sender, "&7- &f" + eventManager.getCurrentEvent().getName()
+                            + " &7(已持续: " + eventManager.getEventTickCounter() + "秒)");
                 } else {
-                    CC.send(sender, "&7- &c没有正在进行的事件");
+                    CC.send(sender, "&7- &c当前没有进行中的事件");
                 }
-                CC.send(sender, "&e=== 事件调度器状态 ===");
+
+                CC.send(sender, "&e=== 调度器状态 ===");
                 if (eventScheduler.getSchedulerTask() != null) {
-                    CC.send(sender, "&7- &a事件调度器已启动");
-                    CC.send(sender, "&7- &f" + eventScheduler.getTimeUntilNextEvent() + " 秒后触发下一个事件");
+                    CC.send(sender, "&7- &a运行中");
+                    CC.send(sender, "&7- &f距离下次事件: " + eventScheduler.getTimeUntilNextEvent() + "秒");
                 } else {
-                    CC.send(sender, "&7- &c事件调度器未启动");
+                    CC.send(sender, "&7- &c已停止");
                 }
             }
             default -> CC.send(sender, "&c用法: /pillar event <start|stop|end|reset|status> [id]");
         }
     }
 
-    /**
-     * 处理 debug 命令
-     */
     private void handleDebug(CommandSender sender, String[] args) {
+        if (!sender.hasPermission("luckypillar.admin")) {
+            CC.send(sender, skyConfig.format(skyConfig.getNoPermission(), new HashMap<>()));
+            return;
+        }
+
         if (args.length < 2) {
             CC.send(sender, "&c用法: /pillar debug <game|events|player> [option]");
             return;
         }
-        String target = args[1].toLowerCase();
 
+        String target = args[1].toLowerCase();
         switch (target) {
             case "game" -> {
                 CC.send(sender, game.toString());
@@ -330,21 +351,27 @@ public class LuckyPillarCommand implements CommandExecutor {
                     CC.send(sender, "&c用法: /pillar debug player <player>");
                     return;
                 }
+
                 String playerName = args[2];
                 Player player = Bukkit.getServer().getPlayer(playerName);
                 if (player == null || !player.isOnline()) {
-                    CC.send(sender, "&c玩家不存在: " + playerName);
+                    CC.send(sender, "&c未找到玩家: " + playerName);
                     return;
                 }
-                CC.send(sender, game.getPlayer(player.getUniqueId()) == null ? "&c玩家不存在: " + playerName : game.getPlayer(player.getUniqueId()).toString());
-                CC.debug(game.getPlayer(player.getUniqueId()).toString());
+
+                LuckyPillarPlayer targetPlayer = game.getPlayer(player.getUniqueId());
+                if (targetPlayer == null) {
+                    CC.send(sender, "&c该玩家不在本局游戏中: " + playerName);
+                    return;
+                }
+
+                CC.send(sender, targetPlayer.toString());
+                CC.debug(targetPlayer.toString());
             }
+            default -> CC.send(sender, "&c用法: /pillar debug <game|events|player> [option]");
         }
     }
 
-    /**
-     * 处理 reload 命令
-     */
     private void handleReload(CommandSender sender) {
         if (!sender.hasPermission("luckypillar.admin")) {
             CC.send(sender, skyConfig.format(skyConfig.getNoPermission(), new HashMap<>()));
@@ -358,30 +385,23 @@ public class LuckyPillarCommand implements CommandExecutor {
 
         CC.send(sender, skyConfig.format(skyConfig.getConfigReloaded(), new HashMap<>()));
     }
-    
-    /**
-     * 发送帮助信息
-     */
+
     private void sendHelp(CommandSender sender) {
-        CC.send(sender, "&6=== SkyLuckyPillar 命令帮助 ===");
-        CC.send(sender, "&e/pillar join &7- 加入游戏");
-        CC.send(sender, "&e/pillar leave &7- 离开游戏");
-        
+        CC.send(sender, "&6=== 幸运之柱 帮助 ===");
+        CC.send(sender, "&e/pillar join &7- 加入游戏或旁观队列");
+        CC.send(sender, "&e/pillar leave &7- 退出游戏或旁观队列");
+
         if (sender.hasPermission("luckypillar.admin")) {
             CC.send(sender, "&c管理员命令:");
-            CC.send(sender, "&e/pillar start &7- 强制开始游戏");
+            CC.send(sender, "&e/pillar start &7- 强制开始");
             CC.send(sender, "&e/pillar stop &7- 停止游戏");
-            CC.send(sender, "&e/pillar setup enable &7- 启动地图配置模式");
-            CC.send(sender, "&e/pillar setup add <id> <height> &7- 在当前位置添加柱子");
-            CC.send(sender, "&e/pillar setup remove <id> &7- 移除柱子");
-            CC.send(sender, "&e/pillar setup list &7- 列出所有柱子");
-            CC.send(sender, "&e/pillar event start [id|random] &7- 开启事件调度器 [强制开启指定事件或随机事件]");
-            CC.send(sender, "&e/pillar event stop &7- 停止事件调度器");
-            CC.send(sender, "&e/pillar event end &7- 强制结束当前事件");
-            CC.send(sender, "&e/pillar event reset &7- 重置事件调度器");
-            CC.send(sender, "&e/pillar event status &7- 显示当前事件状态");
-            CC.send(sender, "&e/pillar debug <game|events|player> [option] &7- 调试信息");
-            CC.send(sender, "&e/pillar reload &7- 重新加载配置");
+            CC.send(sender, "&e/pillar setup enable &7- 开启搭建模式");
+            CC.send(sender, "&e/pillar setup add <id> <height>");
+            CC.send(sender, "&e/pillar setup remove <id>");
+            CC.send(sender, "&e/pillar setup list");
+            CC.send(sender, "&e/pillar event <start|stop|end|reset|status> [id]");
+            CC.send(sender, "&e/pillar debug <game|events|player> [option]");
+            CC.send(sender, "&e/pillar reload");
         }
     }
 }

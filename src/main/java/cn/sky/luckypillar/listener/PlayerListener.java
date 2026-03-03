@@ -3,21 +3,28 @@ package cn.sky.luckypillar.listener;
 import cn.sky.luckypillar.SkyLuckyPillar;
 import cn.sky.luckypillar.game.LuckyPillarGame;
 import cn.sky.luckypillar.game.LuckyPillarPlayer;
+import cn.sky.luckypillar.state.GameState;
 import cn.sky.luckypillar.state.PlayerState;
-import lombok.AllArgsConstructor;
+import cn.sky.luckypillar.utils.compat.VersionCompat;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
-import org.bukkit.entity.Allay;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.player.*;
+import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerLoginEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerPickupItemEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 
 public class PlayerListener implements Listener {
-    
+
     private final LuckyPillarGame game;
 
     public PlayerListener(LuckyPillarGame game) {
@@ -26,33 +33,24 @@ public class PlayerListener implements Listener {
 
     @EventHandler
     public void onPlayerLogin(PlayerLoginEvent event) {
-        if (game.isSetupMode()) {
-            if (!event.getPlayer().hasPermission("luckypillar.admin")) {
-                event.disallow(PlayerLoginEvent.Result.KICK_OTHER, "§c管理员正在配置地图中");
-            }
-            return;
-        }
-        if ((game.getStateManager().isWaiting() || game.getStateManager().isStarting()) && Bukkit.getOnlinePlayers().size() >= game.getMaxPlayer()) {
-            event.disallow(PlayerLoginEvent.Result.KICK_FULL, "§c房间人数已满");
+        if (game.isSetupMode() && !event.getPlayer().hasPermission("luckypillar.admin")) {
+            event.disallow(PlayerLoginEvent.Result.KICK_OTHER, "管理员正在搭建地图 请稍后进入");
         }
     }
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         event.setJoinMessage(null);
-        if (game.isSetupMode()) return;
-        Player player = event.getPlayer();
-        player.getInventory().clear();
-        LuckyPillarPlayer lpPlayer = game.getPlayer(player);
-
-        if (lpPlayer != null) {
-            game.respawnAsSpectator(lpPlayer);
+        if (game.isSetupMode()) {
             return;
         }
 
-        if (Bukkit.getOnlinePlayers().size() > game.getMaxPlayer()) {
-            LuckyPillarPlayer lpSpectator = new LuckyPillarPlayer(player);
-            game.respawnAsSpectator(lpSpectator);
+        Player player = event.getPlayer();
+        player.getInventory().clear();
+
+        LuckyPillarPlayer current = game.getPlayer(player);
+        if (current != null) {
+            game.respawnAsSpectator(current);
             return;
         }
 
@@ -60,12 +58,23 @@ public class PlayerListener implements Listener {
             player.teleport(game.getGameWorld().getSpawnLocation());
         }
 
-        game.addPlayer(player);
+        GameState state = game.getStateManager().getCurrentState();
+        boolean canJoinAsReady = (state == GameState.WAITING || state == GameState.STARTING)
+                && game.getPlayers().size() < game.getMaxPlayer();
+
+        if (canJoinAsReady && game.addPlayer(player)) {
+            return;
+        }
+
+        game.addQueuedSpectator(player);
     }
 
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
-        if (game.isSetupMode()) return;
+        if (game.isSetupMode()) {
+            return;
+        }
+
         Player player = event.getPlayer();
         LuckyPillarPlayer lpPlayer = game.getPlayer(player);
 
@@ -87,7 +96,8 @@ public class PlayerListener implements Listener {
                 lpPlayer.getBukkitPlayer().teleport(lpPlayer.getAssignedPillar().getTopLocation());
                 return;
             }
-            game.killPlayer(lpPlayer, "掉入虚空");
+            VersionCompat.playVoidFallSound(player);
+            game.killPlayer(lpPlayer, "坠入虚空");
         }
     }
 
@@ -95,24 +105,23 @@ public class PlayerListener implements Listener {
     public void onPlayerQuit(PlayerQuitEvent event) {
         event.setQuitMessage(null);
         Player player = event.getPlayer();
-        
+
         if (game.isInGame(player)) {
             game.removePlayer(player);
             if (game.getStateManager().isWaiting() || game.getStateManager().isStarting()) {
                 game.getPlayers().remove(player.getUniqueId());
-                game.getSpectators().stream().filter(spectator -> !spectator.getUuid().equals(player.getUniqueId()) && !game.getPlayers().containsKey(player.getUniqueId()))
-                    .findFirst()
-                    .ifPresent(spectator -> {
-                        game.getSpectators().removeIf(s -> s.getUuid().equals(spectator.getUuid()));
-                        game.addPlayer(spectator.getBukkitPlayer());
-                    });
+                game.promoteFirstQueuedSpectator();
             }
+            return;
         }
+
+        game.removeSpectator(player.getUniqueId());
     }
 
     @EventHandler
     public void onFoodLevelChange(FoodLevelChangeEvent event) {
-        if (event.getEntity().getFoodLevel() != 20) {
+        if (!game.getConfig().isHungerEnabled()) {
+            event.setCancelled(true);
             event.getEntity().setFoodLevel(20);
         }
     }
@@ -120,21 +129,26 @@ public class PlayerListener implements Listener {
     @EventHandler
     public void onPlayerDead(PlayerDeathEvent event) {
         Player player = event.getEntity();
+        if (!game.isInGame(player) && !game.isSpectator(player)) {
+            return;
+        }
+
         Bukkit.getScheduler().runTaskLater(SkyLuckyPillar.getInstance(), () -> {
             player.spigot().respawn();
             if (game.getCenter() != null) {
                 player.teleport(game.getCenter());
             }
         }, 1L);
-
     }
 
     @EventHandler
     public void onPlayerRespawn(PlayerRespawnEvent event) {
-        if (game.isSetupMode()) return;
+        if (game.isSetupMode()) {
+            return;
+        }
+
         Player player = event.getPlayer();
         LuckyPillarPlayer lpPlayer = game.getPlayer(player);
-        
         if (lpPlayer != null && lpPlayer.getState() == PlayerState.DEAD) {
             player.setGameMode(GameMode.SPECTATOR);
         }
@@ -142,34 +156,48 @@ public class PlayerListener implements Listener {
 
     @EventHandler
     public void onPlayerDropItem(PlayerDropItemEvent event) {
-        if (game.isSetupMode()) return;
+        if (game.isSetupMode()) {
+            return;
+        }
+
         Player player = event.getPlayer();
         LuckyPillarPlayer lpPlayer = game.getPlayer(player);
+        boolean isSpectator = (lpPlayer != null && lpPlayer.getState() == PlayerState.SPECTATING)
+                || game.isSpectator(player);
 
-        if (game.getStateManager().isWaiting() || game.getStateManager().isStarting() || (lpPlayer != null && lpPlayer.getState() == PlayerState.SPECTATING)) {
+        if (game.getStateManager().isWaiting() || game.getStateManager().isStarting() || isSpectator) {
             event.setCancelled(true);
         }
     }
 
     @EventHandler
     public void onPlayerPickupItem(PlayerPickupItemEvent event) {
-        if (game.isSetupMode()) return;
+        if (game.isSetupMode()) {
+            return;
+        }
+
         Player player = event.getPlayer();
         LuckyPillarPlayer lpPlayer = game.getPlayer(player);
-        
-        if (game.getStateManager().isWaiting() || game.getStateManager().isStarting() || (lpPlayer != null && lpPlayer.getState() == PlayerState.SPECTATING)) {
+        boolean isSpectator = (lpPlayer != null && lpPlayer.getState() == PlayerState.SPECTATING)
+                || game.isSpectator(player);
+
+        if (game.getStateManager().isWaiting() || game.getStateManager().isStarting() || isSpectator) {
             event.setCancelled(true);
         }
     }
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
-        if (game.isSetupMode()) return;
+        if (game.isSetupMode()) {
+            return;
+        }
+
         Player player = event.getPlayer();
-
         LuckyPillarPlayer lpPlayer = game.getPlayer(player);
+        boolean isSpectator = (lpPlayer != null && lpPlayer.getState() == PlayerState.SPECTATING)
+                || game.isSpectator(player);
 
-        if (game.getStateManager().isWaiting() || game.getStateManager().isStarting() || (lpPlayer != null && lpPlayer.getState() == PlayerState.SPECTATING)) {
+        if (game.getStateManager().isWaiting() || game.getStateManager().isStarting() || isSpectator) {
             event.setCancelled(true);
         }
     }

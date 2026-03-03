@@ -4,7 +4,7 @@ server: "yourserver.ip"
 chatformat:
   waiting: "&7[等待] &f%player_name%: %message%"
   playing: "&a[游戏中] &f%player_name%: %message%"
-  spectating: "&7[观战] &8%player_name%: %message%"
+  spectating: "&7[旁观] &8%player_name%: %message%"
   dead: "&c[已死亡] &7%player_name%: %message%"
 
 # 游戏消息
@@ -22,19 +22,19 @@ messages:
   player-eliminated: "&c%player% &7被淘汰！剩余 &e%remaining% &7名玩家"
 
   event-starting: "&6[事件] &e%event_name% &6即将开始！"
-  event-started: "&6[事件] &e%event_name% &6已开始！持续 &c%duration% &6秒"
+  event-started: "&6[事件] &e%event_name% &6已开始，持续 &c%duration% &6秒"
   event-ended: "&6[事件] &e%event_name% &6已结束！"
 
   not-enough-players: "&c玩家数量不足！至少需要 &e%min% &c名玩家"
-  game-full: "&c游戏已满！"
+  game-full: "&c房间已满！"
   game-in-progress: "&c游戏正在进行中！"
-  no-permission: "&c你没有权限执行此命令！"
+  no-permission: "&c你没有权限执行该命令！"
 
   pillar-added: "&a成功添加柱子 &e%id%"
   pillar-removed: "&a成功移除柱子 &e%id%"
-  config-reloaded: "&a配置已重新加载！"
+  config-reloaded: "&a配置已重载！"
 
-# 计分板配置
+# 计分板
 scoreboard:
   title: "&6&l幸运之柱"
   lines:
@@ -90,7 +90,7 @@ scoreboard:
       - "&7&m-------------------"
       - "&e地图: &f%map%"
       - ""
-      - "&7观战中"
+      - "&7旁观中"
       - ""
       - "&e存活: &a%alive%"
       - ""
@@ -99,7 +99,7 @@ scoreboard:
       - ""
       - "&7&m-------------------"
 
-# Boss血条配置
+# BossBar
 bossbar:
   event:
     color: "RED"
@@ -111,7 +111,7 @@ bossbar:
     style: "SEGMENTED_10"
     title: "&a游戏开始倒计时: &e%countdown%"
 
-# 标题配置
+# 标题
 titles:
   game-start:
     title: "&a游戏开始"
@@ -148,7 +148,7 @@ titles:
     stay: 40
     fade-out: 10
 
-# 音效配置
+# 音效
 sounds:
   game-start: "ENTITY_PLAYER_LEVELUP"
   game-end: "UI_TOAST_CHALLENGE_COMPLETE"

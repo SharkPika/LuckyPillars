@@ -12,13 +12,14 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import cn.sky.luckypillar.utils.compat.VersionCompat;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @AllArgsConstructor
 public class DamageListener implements Listener {
-    
+
     private final LuckyPillarGame game;
     private final SkyConfig skyConfig;
 
@@ -32,38 +33,38 @@ public class DamageListener implements Listener {
             event.setCancelled(true);
             return;
         }
-        
+
         LuckyPillarPlayer lpPlayer = game.getPlayer(player);
         if (lpPlayer == null) {
             return;
         }
-        
+
         // 观战者不受伤害
         if (lpPlayer.getState() == PlayerState.SPECTATING) {
             event.setCancelled(true);
             return;
         }
-        
+
         // 非游戏中状态不受伤害
         if (game.getStateManager().getCurrentState() != GameState.PLAYING) {
             event.setCancelled(true);
             return;
         }
-        
+
         // 检查伤害类型
         EntityDamageEvent.DamageCause cause = event.getCause();
-        
+
         // 掉落伤害
         if (cause == EntityDamageEvent.DamageCause.FALL && !game.getConfig().isFallDamage()) {
             event.setCancelled(true);
             return;
         }
-        
+
         // 火焰伤害
-        if ((cause == EntityDamageEvent.DamageCause.FIRE || 
-             cause == EntityDamageEvent.DamageCause.FIRE_TICK || 
-             cause == EntityDamageEvent.DamageCause.LAVA) && 
-            !game.getConfig().isFireDamage()) {
+        if ((cause == EntityDamageEvent.DamageCause.FIRE ||
+                cause == EntityDamageEvent.DamageCause.FIRE_TICK ||
+                cause == EntityDamageEvent.DamageCause.LAVA) &&
+                !game.getConfig().isFireDamage()) {
             event.setCancelled(true);
         }
     }
@@ -73,7 +74,7 @@ public class DamageListener implements Listener {
         if (!(event.getEntity() instanceof Player victim)) {
             return;
         }
-        
+
         if (!(event.getDamager() instanceof Player attacker)) {
             return;
         }
@@ -81,29 +82,29 @@ public class DamageListener implements Listener {
             event.setCancelled(true);
             return;
         }
-        
+
         LuckyPillarPlayer victimPlayer = game.getPlayer(victim);
         LuckyPillarPlayer attackerPlayer = game.getPlayer(attacker);
-        
+
         if (victimPlayer == null || attackerPlayer == null) {
             return;
         }
-        
+
         // 非游戏中状态不能PvP
         if (game.getStateManager().getCurrentState() != GameState.PLAYING) {
             event.setCancelled(true);
             return;
         }
-        
+
         // 检查是否启用PvP
         if (!game.getConfig().isPvpEnabled()) {
             event.setCancelled(true);
             return;
         }
-        
+
         // 观战者不能攻击或被攻击
-        if (victimPlayer.getState() == PlayerState.SPECTATING || 
-            attackerPlayer.getState() == PlayerState.SPECTATING) {
+        if (victimPlayer.getState() == PlayerState.SPECTATING ||
+                attackerPlayer.getState() == PlayerState.SPECTATING) {
             event.setCancelled(true);
         }
     }
@@ -112,11 +113,11 @@ public class DamageListener implements Listener {
     public void onPlayerDeath(PlayerDeathEvent event) {
         Player player = event.getEntity();
         LuckyPillarPlayer lpPlayer = game.getPlayer(player);
-        
+
         if (lpPlayer == null || lpPlayer.getState() != PlayerState.ALIVE) {
             return;
         }
-        
+
         // 检查是否保留物品
         if (game.getConfig().isKeepInventory()) {
             event.setKeepInventory(true);
@@ -124,21 +125,40 @@ public class DamageListener implements Listener {
         } else if (!game.getConfig().isDropItemsOnDeath()) {
             event.getDrops().clear();
         }
-        
+
         // 检查击杀者
         Player killer = player.getKiller();
         String deathReason;
-        
+
         if (killer != null) {
             LuckyPillarPlayer killerPlayer = game.getPlayer(killer);
             if (killerPlayer != null) {
                 killerPlayer.addKill();
-                
+
+                // 击杀奖励：回复生命值
+                killer.setHealth(Math.min(20.0, killer.getHealth() + 4.0));
+
+                // 击杀音效和粒子效果
+                VersionCompat.playKillSound(killer);
+                VersionCompat.spawnCritParticle(killer.getLocation().add(0, 1, 0), 20);
+
+                // 连杀广播
+                int streak = killerPlayer.getKillStreak();
+                if (streak >= 3) {
+                    String streakMsg = switch (streak) {
+                        case 3 -> "§c§l三连杀！";
+                        case 4 -> "§c§l四连杀！";
+                        case 5 -> "§4§l五杀超神！";
+                        default -> "§4§l" + streak + " 连杀！";
+                    };
+                    game.broadcast("§e" + killer.getName() + " " + streakMsg);
+                }
+
                 Map<String, String> placeholders = new HashMap<>();
                 placeholders.put("player", player.getName());
                 placeholders.put("killer", killer.getName());
                 game.broadcast(skyConfig.format(skyConfig.getPlayerKilled(), placeholders));
-                
+
                 deathReason = "被 " + killer.getName() + " 击杀";
             } else {
                 deathReason = "死亡";
@@ -160,10 +180,16 @@ public class DamageListener implements Listener {
                 deathReason = "死亡";
             }
         }
-        
+
+        // 死亡玩家重置连杀
+        lpPlayer.resetKillStreak();
+
+        // 死亡音效和粒子效果
+        VersionCompat.spawnSmokeParticle(player.getLocation().add(0, 1, 0), 15);
+
         // 处理玩家死亡
         game.killPlayer(lpPlayer, deathReason);
-        
+
         // 清空死亡消息
         event.setDeathMessage(null);
     }

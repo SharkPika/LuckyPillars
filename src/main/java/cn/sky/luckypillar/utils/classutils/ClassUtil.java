@@ -1,5 +1,6 @@
 package cn.sky.luckypillar.utils.classutils;
 
+import cn.sky.luckypillar.utils.chat.CC;
 import com.google.common.collect.ImmutableSet;
 import org.bukkit.plugin.Plugin;
 
@@ -18,7 +19,7 @@ import java.util.jar.JarFile;
 
 public final class ClassUtil {
     private ClassUtil() {
-        throw new RuntimeException("Cannot instantiate a utility class.");
+        throw new RuntimeException("工具类不允许实例化");
     }
 
     public static Collection<Class<?>> getClassesInPackage(Plugin plugin, String packageName) {
@@ -37,7 +38,7 @@ public final class ClassUtil {
             jarFile = new JarFile(jarPath);
         }
         catch (IOException e) {
-            throw new RuntimeException("Unexpected IOException reading JAR File '" + jarPath + "'", e);
+            throw new RuntimeException("读取 JAR 文件时发生异常: " + jarPath, e);
         }
         Enumeration<JarEntry> entries = jarFile.entries();
         while (entries.hasMoreElements()) {
@@ -62,7 +63,7 @@ public final class ClassUtil {
             jarFile.close();
         }
         catch (IOException e) {
-            e.printStackTrace();
+            CC.sendError("&c关闭 JAR 文件失败", e);
         }
         return ImmutableSet.copyOf(classes);
     }
@@ -93,7 +94,6 @@ public final class ClassUtil {
             }
             return result.toArray(new String[result.size()]);
         }
-        throw new UnsupportedOperationException("Cannot list files for URL " + dirURL);
+        throw new UnsupportedOperationException("无法列出该 URL 对应文件: " + dirURL);
     }
 }
-

@@ -27,37 +27,49 @@ public class Scoreboard implements AssembleAdapter {
     @Override
     public List<String> getLines(Player player) {
         LuckyPillarPlayer lpPlayer = game.getPlayer(player);
-        if (lpPlayer == null) {
-            List<String> lines = skyConfig.getScoreboardSpectating();
-            lines.replaceAll(text -> replacePlaceholders(text, null));
-            return CC.translate(lines);
-        }
-        GameState state = game.getStateManager().getCurrentState();
 
-        List<String> lines = new ArrayList<>(switch (state) {
-            case WAITING, STARTING -> skyConfig.getScoreboardWaiting();
-            case PLAYING -> lpPlayer.isAlive() ?
-                    skyConfig.getScoreboardPlaying() :
-                    skyConfig.getScoreboardDead();
-            case ENDING -> skyConfig.getScoreboardPlaying();
-        });
-        lines.replaceAll(text -> replacePlaceholders(text, lpPlayer));
+        List<String> lines;
+        if (lpPlayer == null) {
+            lines = new ArrayList<>(skyConfig.getScoreboardSpectating());
+        } else {
+            GameState state = game.getStateManager().getCurrentState();
+            lines = new ArrayList<>(switch (state) {
+                case WAITING, STARTING -> skyConfig.getScoreboardWaiting();
+                case PLAYING -> lpPlayer.isAlive() ? skyConfig.getScoreboardPlaying() : skyConfig.getScoreboardDead();
+                case ENDING -> skyConfig.getScoreboardPlaying();
+            });
+        }
+
+        LuckyPillarPlayer viewer = lpPlayer;
+        lines.replaceAll(text -> replacePlaceholders(text, viewer));
         return CC.translate(lines);
     }
 
     private String replacePlaceholders(String text, LuckyPillarPlayer lpPlayer) {
         LuckyPillarGame game = SkyLuckyPillar.getInstance().getGame();
+        String eventName = game.getEventScheduler() != null
+                ? game.getEventScheduler().getEventManager().getCurrentEventName()
+                : "N/A";
+
+        String winnerName = "N/A";
+        if (game.getWinner() != null) {
+            LuckyPillarPlayer winnerPlayer = game.getPlayer(game.getWinner());
+            if (winnerPlayer != null) {
+                winnerName = winnerPlayer.getName();
+            }
+        }
+
         return text
-                .replace("%map%", game.getConfig().getGameName())
+                .replace("%map%", game.getConfig().getMapName())
                 .replace("%players%", String.valueOf(game.getPlayers().size()))
                 .replace("%countdown%", String.valueOf(game.getCountdown() + 1))
                 .replace("%alive%", String.valueOf(game.getAlivePlayers().size()))
                 .replace("%kills%", String.valueOf(lpPlayer != null ? lpPlayer.getKills() : 0))
                 .replace("%time%", formatGameTime())
-                .replace("%event%", game.getEventScheduler().getEventManager().getCurrentEventName())
+                .replace("%event%", eventName)
                 .replace("%serverip%", SkyLuckyPillar.getInstance().getSkyConfig().getServer())
                 .replace("%max%", String.valueOf(game.getMaxPlayer()))
-                .replace("%winner%", game.getWinner() != null ? game.getPlayer(game.getWinner()).getName() : "无");
+                .replace("%winner%", winnerName);
     }
 
     private String formatGameTime() {
@@ -72,3 +84,4 @@ public class Scoreboard implements AssembleAdapter {
         return String.format("%02d:%02d", minutes, seconds);
     }
 }
+

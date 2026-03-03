@@ -1,5 +1,6 @@
 package cn.sky.luckypillar.utils.scoreboard;
 
+import cn.sky.luckypillar.utils.chat.CC;
 import lombok.SneakyThrows;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -42,7 +43,7 @@ public class AssembleThread extends Thread {
             try {
                 tick();
             } catch (Exception e) {
-                e.printStackTrace();
+                CC.sendError("&c记分板线程运行异常", e);
             } finally {
                 sleep(20L);
             }
@@ -133,8 +134,8 @@ public class AssembleThread extends Thread {
                     player.setScoreboard(scoreboard);
                 }
             } catch (Exception e) {
-                e.printStackTrace();
-                throw new AssembleException("There was an error updating " + player.getName() + "'s scoreboard.");
+                CC.sendError("&c更新玩家记分板失败: " + player.getName(), e);
+                throw new AssembleException("更新玩家 " + player.getName() + " 的记分板时发生异常");
             }
 
         }

@@ -135,16 +135,21 @@ public class SkyLuckyPillar extends JavaPlugin {
                 }
                 return;
             }
-            /*for (File file : configWorld.listFiles()) {
-                File file2;
-                String[] split = file.getPath().split("/");
-                if (split.length == 1) {
-                    split = file.getPath().split("\\\\");
-                }
-                if (!(file2 = new File("./" + split[split.length - 1])).isDirectory()) continue;
-                WorldUtil.deleteDir(file2);
-            }*/
-            Files.deleteIfExists(world.toPath());
+            /*
+             * for (File file : configWorld.listFiles()) {
+             * File file2;
+             * String[] split = file.getPath().split("/");
+             * if (split.length == 1) {
+             * split = file.getPath().split("\\\\");
+             * }
+             * if (!(file2 = new File("./" + split[split.length - 1])).isDirectory())
+             * continue;
+             * WorldUtil.deleteDir(file2);
+             * }
+             */
+            if (world.exists() && world.listFiles().length > 0) {
+                WorldUtil.deleteDir(world);
+            }
             world.mkdirs();
             WorldUtil.copyDir(configWorld.getPath(), world.getPath());
             CC.send("&a地图加载成功");
@@ -161,7 +166,14 @@ public class SkyLuckyPillar extends JavaPlugin {
         this.eventManager.registerEvent("arrow-rain", new ArrowRainEvent(this.gameConfig));
         this.eventManager.registerEvent("lava-rise", new LavaRiseEvent(this.gameConfig));
         this.eventManager.registerEvent("block-decay", new BlockDecayEvent(this.gameConfig));
-        //this.eventManager.registerEvent("supply-drop", new SupplyDropEvent(gameConfig));
+        this.eventManager.registerEvent("supply-drop", new SupplyDropEvent(this.gameConfig));
+        this.eventManager.registerEvent("dragon-spawn", new DragonSpawnEvent());
+        this.eventManager.registerEvent("buff", new BuffEvent(this.gameConfig));
+        this.eventManager.registerEvent("tnt-rain", new TNTRainEvent(this.gameConfig));
+        this.eventManager.registerEvent("darkness", new DarknessEvent(this.gameConfig));
+        this.eventManager.registerEvent("shuffle", new ShuffleEvent(this.gameConfig));
+        this.eventManager.registerEvent("treasure-rain", new TreasureRainEvent(this.gameConfig));
+        this.eventManager.registerEvent("border-shrink", new BorderShrinkEvent(this.gameConfig));
 
         CC.send("&f已注册 &b" + this.eventManager.getRegisteredEvents().size() + " &f个游戏事件");
     }

@@ -1,5 +1,7 @@
 package cn.sky.luckypillar.utils.time;
 
+import cn.sky.luckypillar.utils.chat.CC;
+
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.text.ParseException;
@@ -15,7 +17,7 @@ public final class TimeUtil {
     private static final SimpleDateFormat TIME_TO_REQUEST_FORMAT = new SimpleDateFormat("MM-dd");
 
     private TimeUtil() {
-        throw new RuntimeException("Cannot instantiate a utility class.");
+        throw new RuntimeException("工具类不允许实例化");
     }
 
     public static long getMinecraftDay(long mills) {
@@ -50,7 +52,7 @@ public final class TimeUtil {
         try {
             startTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(sdf.format(System.currentTimeMillis()));
         } catch (ParseException e) {
-            e.printStackTrace();
+            CC.sendError("&c解析次日时间失败", e);
             return null;
         }
 

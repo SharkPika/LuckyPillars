@@ -2,7 +2,7 @@
 
 ![GitHub Release (latest by date)](https://img.shields.io/github/v/release/SharkPika/SkyLuckyPillar?label=latest%20release)
 ![GitHub License](https://img.shields.io/github/license/SharkPika/SkyLuckyPillar)
-![PaperMC](https://img.shields.io/badge/Server-Paper%201.16+-blue)
+![PaperMC](https://img.shields.io/badge/Server-Paper%201.8+-blue)
 ![Java](https://img.shields.io/badge/Java-21+-orange)
 
 A fast-paced PvP minigame where players spawn on **floating pillars above an island**. Every few seconds, they receive random items and must fight to be the last one standing. The arena automatically resets after restart the server, keeping the gameplay smooth and repeatable.

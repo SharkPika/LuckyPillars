@@ -4,117 +4,116 @@ import cn.sky.luckypillar.config.LuckyPillarConfig;
 import cn.sky.luckypillar.event.GameEvent;
 import cn.sky.luckypillar.game.LuckyPillarGame;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.Arrow;
 import org.bukkit.util.Vector;
 
-import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.Random;
 
-/**
- * 箭雨事件
- * 从天空向玩家位置降下箭矢
- */
 public class ArrowRainEvent implements GameEvent {
-    
+
+    private static final int BASE_ARROWS_PER_PLAYER = 6;
+    private static final int MAX_ARROWS_PER_TICK = 120;
+
     private final LuckyPillarConfig config;
-    private List<Location> arrowLocs;
-    
+    private final Random random;
+
+    private World world;
+    private Location center;
+    private double spawnRadius;
+    private double spawnY;
+
     public ArrowRainEvent(LuckyPillarConfig config) {
         this.config = config;
-        this.arrowLocs = null;
+        this.random = new Random();
     }
-    
+
     @Override
     public String getId() {
         return "arrow-rain";
     }
-    
+
     @Override
     public String getName() {
         return "箭雨";
     }
-    
+
     @Override
     public boolean isEnabled() {
         return config.isArrowRainEnabled();
     }
-    
+
     @Override
     public int getDuration() {
         return config.getArrowRainDuration();
     }
-    
+
     @Override
     public void onStart(LuckyPillarGame game) {
-        if (game.getFarthest() == null) return;
-
-        if (arrowLocs == null) {
-            Location center = game.getCenter();
-            Location farthest = game.getFarthest();
-
-            double cx = center.getX();
-            double cz = center.getZ();
-            double fx = farthest.getX();
-            double fz = farthest.getZ();
-            double y = farthest.getY();
-
-            double dx = fx - cx;
-            double dz = fz - cz;
-            double dist = Math.sqrt(dx * dx + dz * dz);
-
-            double normX = dx / dist;
-            double normZ = dz / dist;
-
-            double newDist = dist + 15;
-
-            double newFx = cx + newDist * normX;
-            double newFz = cz + newDist * normZ;
-
-            double newSx = cx - newDist * normX;
-            double newSz = cz - newDist * normZ;
-
-            arrowLocs = game.getRectanglePoints(
-                    new Location(game.getGameWorld(), newFx, y + 25, newFz),
-                    new Location(game.getGameWorld(), newSx, y + 25, newSz)
-            );
-        }
-    }
-    
-    @Override
-    public void onTick(LuckyPillarGame game) {
-        if (arrowLocs == null || arrowLocs.isEmpty()) return;
-
-        for (Location arrowLoc : arrowLocs) {
-            if (ThreadLocalRandom.current().nextDouble() < config.getArrowChance()) {
-                this.spawnArrow(arrowLoc);
-            }
-        }
-    }
-    
-    @Override
-    public void onEnd(LuckyPillarGame game) {
-    }
-    
-    @Override
-    public void announce(LuckyPillarGame game) {
-        game.broadcast("&c&l[事件] 箭雨！");
-        game.broadcast("&e小心头顶的箭矢！");
-    }
-    
-    /**
-     * 在指定位置上方生成箭
-     */
-    private void spawnArrow(Location arrowLoc) {
-        if (arrowLoc == null || arrowLoc.getWorld() == null) {
+        if (game.getCenter() == null || game.getFarthest() == null || game.getGameWorld() == null) {
+            world = null;
+            center = null;
             return;
         }
-        Arrow arrow = arrowLoc.getWorld().spawnArrow(
-            arrowLoc,
-            new Vector(0, -1, 0),
-            (float) config.getArrowSpeed(),
-            5.0f
+
+        world = game.getGameWorld();
+        center = game.getCenter().clone();
+
+        double dx = game.getFarthest().getX() - center.getX();
+        double dz = game.getFarthest().getZ() - center.getZ();
+        spawnRadius = Math.max(8.0, Math.sqrt(dx * dx + dz * dz) + 10.0);
+        spawnY = game.getFarthest().getY() + 25.0;
+    }
+
+    @Override
+    public void onTick(LuckyPillarGame game) {
+        if (world == null || center == null) {
+            return;
+        }
+
+        double chance = Math.max(0.0, Math.min(1.0, config.getArrowChance()));
+        if (chance <= 0.0) {
+            return;
+        }
+
+        int alivePlayers = Math.max(1, game.getAlivePlayers().size());
+        int arrowsPerTick = (int) Math.ceil(alivePlayers * BASE_ARROWS_PER_PLAYER * chance);
+        arrowsPerTick = Math.max(1, Math.min(MAX_ARROWS_PER_TICK, arrowsPerTick));
+
+        for (int i = 0; i < arrowsPerTick; i++) {
+            spawnArrow(randomSpawnLocation());
+        }
+    }
+
+    @Override
+    public void onEnd(LuckyPillarGame game) {
+        world = null;
+        center = null;
+    }
+
+    @Override
+    public void announce(LuckyPillarGame game) {
+        game.broadcast("&c&l[事件] 箭雨来袭！");
+        game.broadcast("&e小心头顶落下的箭矢！");
+    }
+
+    private Location randomSpawnLocation() {
+        double angle = random.nextDouble() * Math.PI * 2;
+        double distance = Math.sqrt(random.nextDouble()) * spawnRadius;
+
+        double x = center.getX() + Math.cos(angle) * distance;
+        double z = center.getZ() + Math.sin(angle) * distance;
+
+        return new Location(world, x, spawnY, z);
+    }
+
+    private void spawnArrow(Location arrowLoc) {
+        Arrow arrow = world.spawnArrow(
+                arrowLoc,
+                new Vector(0, -1, 0),
+                (float) config.getArrowSpeed(),
+                5.0f
         );
-        
         arrow.setPickupStatus(Arrow.PickupStatus.DISALLOWED);
     }
 }

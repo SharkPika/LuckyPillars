@@ -16,6 +16,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import org.bukkit.*;
+import org.bukkit.entity.Firework;
+import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -28,8 +30,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 /**
- * SkyLuckyPillar 游戏主控制器
- * 负责整个游戏的生命周期管理
+ * SkyLuckyPillar 婵犵數濮烽弫鎼佸磻閻愬搫绠伴柟闂寸缁犵喖鏌ㄩ悢鍝勑㈤柛銊ュ€圭换娑㈠幢濡搫顫庨梺宕囩帛濮婅崵妲愰幘瀛樺濠殿喗鍩堟禍婵堢矉閹烘埈娼ㄩ柍褜鍓熷璇测槈閵忕姷顔婇梺鍝勬川閸犳捇濡撮幇顑芥斀?
+ * 闂傚倷娴囧畷鍨叏閻㈢绀夋俊銈呮噹缁愭鏌￠崶銉ョ仾闁稿孩顨嗘穱濠囧Χ閸涱喖娅ｉ梺鍝勵儎閼冲墎妲愰幘璇查唶闁靛繒濮弸鍛存⒑閹肩偛鈧洟顢栭崱娆愬床婵炴垯鍨圭粻濠氭煣韫囷絽浜滈柡鍡楃墦濮婃椽骞栭悙鎻掝瀴闂佽崵鍟块弲鐘荤嵁閸℃稑绀冩い鏃囧亹椤︽澘顪冮妶鍡樺暗闁哥姵鍔曢埢宥夊閵堝棌鎷洪梺鍛婄☉閿曪箓鈥栭崗闂寸箚妞ゆ劑鍨归顓燁殽閻愯韬€规洖宕埥澶娢熼搹鐟扮秮闂傚倷鑳剁划顖炲蓟瑜忛幏鍐晝閸屾俺袝闂侀€炲苯澧存慨?
  */
 
 @Getter
@@ -40,44 +42,29 @@ public class LuckyPillarGame {
     private final LuckyPillarConfig config;
     private final SkyConfig skyConfig;
 
-    // 管理器
     private final GameStateManager stateManager;
     private final PillarManager pillarManager;
     private final ItemDistributor itemDistributor;
-
+    private final Map<UUID, LuckyPillarPlayer> players;
+    private final List<LuckyPillarPlayer> alivePlayers;
+    private final List<LuckyPillarPlayer> spectators;
+    private final Location center;
+    private final Location farthest;
+    private final int maxPlayer;
     @Setter
     private BossBarManager bossBarManager;
     @Setter
     private TitleManager titleManager;
-
     @Setter
     private EventScheduler eventScheduler;
-
     private LuckyPillarItemRunnable gameRunnable;
-
     @Setter
     private boolean setupMode;
-
     private UUID winner;
-
-    // 玩家数据（使用线程安全的集合）
-    private final Map<UUID, LuckyPillarPlayer> players;
-    private final List<LuckyPillarPlayer> alivePlayers;
-    private final List<LuckyPillarPlayer> spectators;
-
-    // 游戏世界
     private World gameWorld;
-    private final Location center;
-    private final Location farthest;
-
-    // 倒计时任务
     private BukkitTask countdownTask;
     private int countdown;
-
-    // 游戏开始时间
     private long gameStartTime;
-
-    private final int maxPlayer;
 
     public LuckyPillarGame(JavaPlugin plugin, LuckyPillarConfig config, SkyConfig skyConfig) {
         this.plugin = plugin;
@@ -97,8 +84,6 @@ public class LuckyPillarGame {
             WorldCreator creator = new WorldCreator(config.getMapName());
             creator.type(WorldType.NORMAL);
             this.gameWorld = creator.createWorld();
-            //CC.warn("&c游戏世界 " + config.getMapName() + " 不存在！");
-            //throw new IllegalArgumentException("游戏世界 " + config.getMapName() + " 不存在！");
         }
         this.gameWorld.setTime(1000);
         this.gameWorld.getEntities().forEach(Entity::remove);
@@ -122,23 +107,23 @@ public class LuckyPillarGame {
         this.setupMode = this.maxPlayer == 0;
     }
 
-    /**
-     * 玩家加入游戏
-     */
     public boolean addPlayer(Player player) {
         if (players.containsKey(player.getUniqueId())) {
             return false;
         }
 
         if (players.size() >= maxPlayer) {
-            player.sendMessage(skyConfig.format(skyConfig.getGameFull(), new HashMap<>()));
+            CC.send(player, skyConfig.format(skyConfig.getGameFull(), new HashMap<>()));
             return false;
         }
 
-        if (stateManager.getCurrentState() != GameState.WAITING) {
-            player.sendMessage(skyConfig.format(skyConfig.getGameInProgress(), new HashMap<>()));
+        if (stateManager.getCurrentState() != GameState.WAITING
+                && stateManager.getCurrentState() != GameState.STARTING) {
+            CC.send(player, skyConfig.format(skyConfig.getGameInProgress(), new HashMap<>()));
             return false;
         }
+
+        removeSpectator(player.getUniqueId());
 
         LuckyPillarPlayer lpPlayer = new LuckyPillarPlayer(player);
         players.put(player.getUniqueId(), lpPlayer);
@@ -155,24 +140,24 @@ public class LuckyPillarGame {
         player.setLevel(this.getCountdown() == -1 ? 0 : this.getCountdown());
 
         Pillar pillar = lpPlayer.assignNewPillar();
+        if (pillar == null) {
+            players.remove(player.getUniqueId());
+            CC.send(player, skyConfig.format(skyConfig.getGameFull(), new HashMap<>()));
+            return false;
+        }
         lpPlayer.getBukkitPlayer().teleport(pillar.getTopLocation());
 
-        // 广播玩家加入消息
         Map<String, String> placeholders = new HashMap<>();
         placeholders.put("player", player.getName());
         placeholders.put("current", String.valueOf(players.size()));
         placeholders.put("max", String.valueOf(maxPlayer));
         broadcast(skyConfig.format(skyConfig.getPlayerJoined(), placeholders));
 
-        // 检查是否可以开始游戏
         checkStartCondition();
 
         return true;
     }
 
-    /**
-     * 玩家离开游戏
-     */
     public void removePlayer(Player player) {
         LuckyPillarPlayer lpPlayer = players.get(player.getUniqueId());
         if (lpPlayer == null) {
@@ -182,39 +167,32 @@ public class LuckyPillarGame {
         alivePlayers.remove(lpPlayer);
         spectators.remove(lpPlayer);
 
-        // 释放柱子
         if (lpPlayer.getAssignedPillar() != null) {
             lpPlayer.getAssignedPillar().release();
         }
 
-        // 广播玩家离开消息
         Map<String, String> placeholders = new HashMap<>();
         placeholders.put("player", player.getName());
         broadcast(skyConfig.format(skyConfig.getPlayerLeft(), placeholders));
 
-        // 检查游戏状态
-        if (stateManager.isStarting() && players.size() < config.getMinPlayers()) {
-            // 人数不足，返回等待状态
+        int remainingPlayers = players.containsKey(player.getUniqueId()) ? players.size() - 1 : players.size();
+        if (stateManager.isStarting() && remainingPlayers < config.getMinPlayers()) {
             cancelCountdown();
             stateManager.changeState(GameState.WAITING);
         } else if (stateManager.isGameRunning()) {
-            // 检查胜利条件
             checkWinCondition();
         }
     }
 
-    /**
-     * 检查是否可以开始游戏
-     */
     private void checkStartCondition() {
         if (stateManager.getCurrentState() == GameState.WAITING
-            && players.size() >= maxPlayer) {
+                && players.size() >= maxPlayer) {
             stateManager.changeState(GameState.STARTING);
             return;
         }
         if (stateManager.getCurrentState() == GameState.WAITING
-            && players.size() >= config.getMinPlayers()
-            && countdown == -1) {
+                && players.size() >= config.getMinPlayers()
+                && countdown == -1) {
             countdown = 60;
             players.values().forEach(player -> player.getBukkitPlayer().setLevel(countdown));
             countdownTask = new BukkitRunnable() {
@@ -233,19 +211,15 @@ public class LuckyPillarGame {
         }
     }
 
-    /**
-     * 开始游戏
-     */
     public void startGame() {
         if (!stateManager.canStartGame() && stateManager.getCurrentState() != GameState.STARTING) {
-            CC.warn("&c无法开始游戏，当前状态: " + stateManager.getCurrentState());
+            CC.warn("&c当前状态不允许开始游戏: " + stateManager.getCurrentState());
             return;
         }
 
-        // 检查柱子数量
         if (!pillarManager.hasEnoughPillars(players.size())) {
-            CC.warn("&c柱子数量不足！需要 " + players.size() + " 个，但只有 " + pillarManager.getPillarCount() + " 个");
-            broadcast("&c柱子数量不足，无法开始游戏！");
+            CC.warn("&c柱子数量不足：需要 " + players.size() + " 个，当前可用 " + pillarManager.getPillarCount() + " 个");
+            broadcast("&c柱子数量不足 游戏无法开始");
             return;
         }
 
@@ -254,9 +228,6 @@ public class LuckyPillarGame {
         stateManager.changeState(GameState.PLAYING);
     }
 
-    /**
-     * 停止游戏
-     */
     public void stopGame() {
         if (stateManager.getCurrentState() == GameState.WAITING) {
             return;
@@ -266,24 +237,19 @@ public class LuckyPillarGame {
         stateManager.changeState(GameState.ENDING);
     }
 
-    /**
-     * 结束游戏
-     */
     public void endGame(LuckyPillarPlayer winner) {
         if (winner != null) {
-            // 宣布胜利者
             Map<String, String> placeholders = new HashMap<>();
             placeholders.put("winner", winner.getName());
             broadcast(skyConfig.format(skyConfig.getGameWinner(), placeholders));
 
             winner.getBukkitPlayer().setAllowFlight(true);
             winner.getBukkitPlayer().setFlying(true);
-            CC.send("&a玩家 " + winner.getName() + " 获得胜利！");
+            CC.send("&a获胜者: &e" + winner.getName());
 
             titleManager.showVictoryTitle(winner.getBukkitPlayer());
             titleManager.showGameOverTitleToAll();
         } else {
-            // 没有胜利者（超时或其他原因）
             broadcast(skyConfig.format(skyConfig.getGameTimeout(), new HashMap<>()));
         }
 
@@ -291,21 +257,14 @@ public class LuckyPillarGame {
         stateManager.changeState(GameState.ENDING);
     }
 
-    /**
-     * 重置游戏
-     */
     public void resetGame() {
-        // 清理平台
         pillarManager.clearAllPlatforms();
 
-        // 释放所有柱子
         pillarManager.releaseAllPillars();
 
-        // 重置玩家数据
         for (LuckyPillarPlayer lpPlayer : players.values()) {
             lpPlayer.reset();
 
-            // 恢复玩家状态
             if (lpPlayer.isOnline()) {
                 Player player = lpPlayer.getBukkitPlayer();
                 player.setGameMode(GameMode.SURVIVAL);
@@ -315,19 +274,14 @@ public class LuckyPillarGame {
             }
         }
 
-        // 清空列表
         alivePlayers.clear();
         spectators.clear();
 
-        // 重置状态
         stateManager.reset();
 
         CC.send("&c游戏已重置");
     }
 
-    /**
-     * 玩家死亡处理
-     */
     public void killPlayer(LuckyPillarPlayer lpPlayer, String reason) {
         if (lpPlayer.getState() != PlayerState.ALIVE) {
             return;
@@ -338,7 +292,6 @@ public class LuckyPillarGame {
         lpPlayer.calculateSurvivalTime();
         alivePlayers.remove(lpPlayer);
 
-        // 广播死亡消息
         Map<String, String> placeholders = new HashMap<>();
         placeholders.put("player", lpPlayer.getName());
         placeholders.put("reason", reason);
@@ -347,23 +300,21 @@ public class LuckyPillarGame {
 
         titleManager.showPlayerKilledTitle(lpPlayer.getBukkitPlayer(), lpPlayer.getName());
 
-        // 转为观战模式
         respawnAsSpectator(lpPlayer);
 
-        // 检查胜利条件
         checkWinCondition();
     }
 
-    /**
-     * 转为观战模式
-     */
     public void respawnAsSpectator(LuckyPillarPlayer lpPlayer) {
         if (lpPlayer == null || !lpPlayer.isOnline()) {
             return;
         }
 
         lpPlayer.setState(PlayerState.SPECTATING);
-        spectators.add(lpPlayer);
+        boolean exists = spectators.stream().anyMatch(s -> s.getUuid().equals(lpPlayer.getUuid()));
+        if (!exists) {
+            spectators.add(lpPlayer);
+        }
 
         Player player = lpPlayer.getBukkitPlayer();
         player.setGameMode(GameMode.SPECTATOR);
@@ -371,56 +322,83 @@ public class LuckyPillarGame {
         player.setFlying(true);
     }
 
-    /**
-     * 检查胜利条件
-     */
+    public boolean isSpectator(Player player) {
+        return spectators.stream().anyMatch(s -> s.getUuid().equals(player.getUniqueId()));
+    }
+
+    public boolean addQueuedSpectator(Player player) {
+        if (player == null) {
+            return false;
+        }
+        if (players.containsKey(player.getUniqueId())) {
+            return false;
+        }
+        if (isSpectator(player)) {
+            player.setGameMode(GameMode.SPECTATOR);
+            player.setAllowFlight(true);
+            player.setFlying(true);
+            return true;
+        }
+
+        LuckyPillarPlayer spectator = new LuckyPillarPlayer(player);
+        respawnAsSpectator(spectator);
+        return true;
+    }
+
+    public void removeSpectator(UUID uuid) {
+        spectators.removeIf(s -> s.getUuid().equals(uuid));
+    }
+
+    public boolean promoteFirstQueuedSpectator() {
+        for (LuckyPillarPlayer spectator : spectators) {
+            if (players.containsKey(spectator.getUuid())) {
+                continue;
+            }
+            if (!spectator.isOnline()) {
+                spectators.remove(spectator);
+                continue;
+            }
+
+            spectators.remove(spectator);
+            if (addPlayer(spectator.getBukkitPlayer())) {
+                return true;
+            }
+            respawnAsSpectator(spectator);
+            return false;
+        }
+        return false;
+    }
+
     public void checkWinCondition() {
         if (!stateManager.isGameRunning()) {
             return;
         }
 
         if (alivePlayers.size() == 1) {
-            // 只剩一名玩家，游戏结束
             LuckyPillarPlayer winner = alivePlayers.get(0);
             this.winner = winner.getUuid();
             endGame(winner);
         } else if (alivePlayers.isEmpty()) {
-            // 没有存活玩家
             endGame(null);
         }
     }
 
-    /**
-     * 广播消息给所有玩家
-     */
     public void broadcast(String message) {
         CC.broadcast(message);
     }
 
-    /**
-     * 获取玩家
-     */
     public LuckyPillarPlayer getPlayer(Player player) {
         return players.get(player.getUniqueId());
     }
 
-    /**
-     * 获取玩家
-     */
     public LuckyPillarPlayer getPlayer(UUID uuid) {
         return players.get(uuid);
     }
 
-    /**
-     * 检查玩家是否在游戏中
-     */
     public boolean isInGame(Player player) {
         return players.containsKey(player.getUniqueId());
     }
 
-    /**
-     * 取消倒计时
-     */
     private void cancelCountdown() {
         if (countdownTask != null) {
             countdownTask.cancel();
@@ -428,21 +406,11 @@ public class LuckyPillarGame {
         }
     }
 
-    // ========== 状态进入处理 ==========
-
-    /**
-     * 进入等待状态
-     */
     public void onEnterWaiting() {
-        CC.send("&a进入等待状态");
         resetGame();
     }
 
-    /**
-     * 进入开始倒计时状态
-     */
     public void onEnterStarting() {
-        CC.send("&a进入开始倒计时状态");
         countdown = config.getCountdown();
 
         countdownTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
@@ -464,14 +432,7 @@ public class LuckyPillarGame {
         }, 0L, 20L);
     }
 
-    /**
-     * 进入游戏中状态
-     */
     public void onEnterPlaying() {
-        CC.send("&a进入游戏中状态");
-
-        // 设置所有玩家为存活状态
-        alivePlayers.clear();
         for (LuckyPillarPlayer lpPlayer : players.values()) {
             lpPlayer.setState(PlayerState.ALIVE);
             lpPlayer.startGameTimer();
@@ -479,51 +440,85 @@ public class LuckyPillarGame {
             alivePlayers.add(lpPlayer);
         }
 
-        // 分配玩家到柱子
-        //pillarManager.assignPlayersToPillars(alivePlayers);
+        pillarManager.buildAllPlatforms();
 
-        // 构建平台
-        //pillarManager.buildAllPlatforms();
-
-        // 传送玩家到柱子顶部
         for (LuckyPillarPlayer lpPlayer : alivePlayers) {
             if (lpPlayer.getAssignedPillar() != null && lpPlayer.isOnline()) {
                 Player player = lpPlayer.getBukkitPlayer();
-                //player.teleport(lpPlayer.getAssignedPillar().getTopLocation());
+                player.teleport(lpPlayer.getAssignedPillar().getTopLocation());
                 player.setGameMode(GameMode.SURVIVAL);
                 player.setHealth(20.0);
                 player.setFoodLevel(20);
             }
         }
 
-        // 分发初始装备
-        //itemDistributor.distributeStarterKitToAll(alivePlayers);
+        itemDistributor.distributeStarterKitToAll(alivePlayers);
 
-        // 广播游戏开始消息
         broadcast(skyConfig.format(skyConfig.getGameStarted(), new HashMap<>()));
 
-        // 记录游戏开始时间
         gameStartTime = System.currentTimeMillis();
 
-        // 启动事件调度器
         if (eventScheduler != null) {
             eventScheduler.start();
         }
 
         gameRunnable = new LuckyPillarItemRunnable();
         gameRunnable.runTaskTimer(plugin, 0L, config.getItemCountdown() * 20L);
-    }
-
-    /**
-     * 进入结束状态
-     */
-    public void onEnterEnding() {
-        CC.send("&a进入结束状态");
 
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            Bukkit.getServer().getOnlinePlayers().forEach(player -> player.kickPlayer("§c游戏正在重置中"));
+            if (stateManager.isGameRunning()) {
+                broadcast("&c游戏时间已到！");
+                endGame(null);
+            }
+        }, config.getGameTimeout() * 20L);
+    }
+
+    public void onEnterEnding() {
+        List<LuckyPillarPlayer> ranked = new ArrayList<>(players.values());
+        ranked.sort((a, b) -> b.getKills() - a.getKills());
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("&6&l===== 游戏结束 =====\n");
+        for (int i = 0; i < ranked.size(); i++) {
+            LuckyPillarPlayer p = ranked.get(i);
+            String medal = switch (i) {
+                case 0 -> "&6🥇";
+                case 1 -> "&7🥈";
+                case 2 -> "&c🥉";
+                default -> "&f" + (i + 1);
+            };
+            sb.append(medal).append(" &e").append(p.getName())
+                    .append(" &7- &c").append(p.getKills()).append(" 击杀")
+                    .append(" &7| &a").append(p.getFormattedSurvivalTime()).append(" 存活时间\n");
+        }
+        broadcast(sb.toString());
+
+        if (winner != null) {
+            LuckyPillarPlayer winnerPlayer = players.get(winner);
+            if (winnerPlayer != null && winnerPlayer.isOnline()) {
+                java.util.Random rng = new java.util.Random();
+                BukkitTask fireworkTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+                    Location loc = winnerPlayer.getBukkitPlayer().getLocation().add(0, 2, 0);
+                    if (loc.getWorld() == null)
+                        return;
+                    Firework fw = loc.getWorld().spawn(loc, Firework.class);
+                    FireworkMeta meta = fw.getFireworkMeta();
+                    meta.addEffect(FireworkEffect.builder()
+                            .withColor(Color.fromRGB(rng.nextInt(256), rng.nextInt(256), rng.nextInt(256)))
+                            .with(FireworkEffect.Type.BALL_LARGE)
+                            .withFlicker().withTrail().build());
+                    meta.setPower(1);
+                    fw.setFireworkMeta(meta);
+                }, 0L, 20L);
+
+                Bukkit.getScheduler().runTaskLater(plugin, fireworkTask::cancel, 200L);
+            }
+        }
+
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            Bukkit.getServer().getOnlinePlayers().forEach(player -> player.kickPlayer("§c游戏结束"));
             Bukkit.getServer().shutdown();
-        }, 200L);
+        }, 300L);
     }
 
     public Location getGeometricCenter(Collection<Location> locations) {
@@ -540,7 +535,7 @@ public class LuckyPillarGame {
                 first = loc;
             }
             if (!Objects.requireNonNull(first.getWorld()).equals(loc.getWorld())) {
-                throw new IllegalArgumentException("所有Location必须在同一世界");
+                throw new IllegalArgumentException("所有 Location 必须在同一世界");
             }
             x += loc.getX();
             y += loc.getY();
@@ -552,8 +547,7 @@ public class LuckyPillarGame {
                 first.getWorld(),
                 x / count,
                 y / count,
-                z / count
-        );
+                z / count);
     }
 
     public Location getFarthestLocationFromCenter(Collection<Location> locations) {
@@ -586,13 +580,12 @@ public class LuckyPillarGame {
                 center.getWorld(),
                 center.getX() + maxX,
                 center.getY() + maxY,
-                center.getZ() + maxZ
-        );
+                center.getZ() + maxZ);
     }
 
     public List<Location> getRectanglePoints(Location loc1, Location loc2) {
         if (!Objects.requireNonNull(loc1.getWorld()).equals(loc2.getWorld())) {
-            throw new IllegalArgumentException("两点必须在同一世界");
+            throw new IllegalArgumentException("两个点必须在同一世界");
         }
 
         World world = loc1.getWorld();
@@ -613,16 +606,10 @@ public class LuckyPillarGame {
         return result;
     }
 
-    /**
-     * 获取存活玩家列表
-     */
     public List<LuckyPillarPlayer> getAlivePlayers() {
         return new ArrayList<>(alivePlayers);
     }
 
-    /**
-     * 获取所有玩家列表
-     */
     public Collection<LuckyPillarPlayer> getAllPlayers() {
         return players.values();
     }

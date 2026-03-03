@@ -1,5 +1,6 @@
 package cn.sky.luckypillar.utils.config;
 
+import cn.sky.luckypillar.utils.chat.CC;
 import cn.sky.luckypillar.utils.config.annotation.ConfigData;
 import cn.sky.luckypillar.utils.config.serializer.LocationSerializer;
 import lombok.Getter;
@@ -55,7 +56,7 @@ public class Configuration {
                 field.set(this, value);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            CC.sendError("&c加载配置文件失败: " + this.configFile.getName(), e);
         }
     }
 
@@ -75,7 +76,7 @@ public class Configuration {
         try {
             this.config.save(this.configFile);
         } catch (Throwable e) {
-            e.printStackTrace();
+            CC.sendError("&c保存配置文件失败: " + this.configFile.getName(), e);
         }
     }
 }

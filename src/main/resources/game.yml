@@ -9,18 +9,16 @@ game:
 
 # 柱子配置
 pillars:
-  # 柱子位置列表（使用 /pillar setup add <id> 命令添加）
+  # 柱子位置列表（可使用 /pillar setup add <id> <height> 添加）
   locations:
     -
 
-  # 默认配置
   default-platform-size: 1
   default-platform-material: "BEDROCK"
   default-height: 70
 
 # 物品配置
 items:
-  # 禁止物品列表
   ban-list:
     - "BARRIER"
 
@@ -29,7 +27,6 @@ events:
   cooldown: 120
   first-event-delay: 60
 
-  # 怪物狂潮
   monster-frenzy:
     enabled: true
     duration: 30
@@ -40,21 +37,18 @@ events:
       - "SPIDER"
       - "CREEPER"
 
-  # 箭雨
   arrow-rain:
     enabled: true
     duration: 20
     arrow-chance: 0.3
     arrow-speed: 1.0
 
-  # 岩浆上升
   lava-rise:
     enabled: true
     duration: 40
     rise-speed: 1
     max-height: 100
 
-  # 方块衰减
   block-decay:
     enabled: true
     duration: 30
@@ -63,12 +57,38 @@ events:
       - "BEDROCK"
       - "OBSIDIAN"
 
-  # 空投补给
   supply-drop:
     enabled: true
     duration: 5
     drop-count: 3
     items-per-drop: 5
+
+  buff:
+    enabled: true
+    duration: 15
+
+  tnt-rain:
+    enabled: true
+    duration: 15
+    spawn-chance: 0.15
+
+  darkness:
+    enabled: true
+    duration: 15
+
+  shuffle:
+    enabled: true
+
+  treasure-rain:
+    enabled: true
+    duration: 15
+    items-per-tick: 3
+
+  border-shrink:
+    enabled: true
+    duration: 60
+    initial-size: 200
+    min-size: 30
 
 # 游戏规则
 rules:
@@ -86,7 +106,7 @@ rules:
   fall-damage: true
   fire-damage: true
 
-# 观战模式
+# 旁观配置
 spectator:
   allow-flight: true
   allow-teleport: true

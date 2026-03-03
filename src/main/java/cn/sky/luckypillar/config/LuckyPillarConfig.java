@@ -173,6 +173,57 @@ public class LuckyPillarConfig extends Configuration {
     @ConfigData("spectator.show-alive-players")
     private boolean showAlivePlayers = true;
 
+    // 增益 Buff 事件
+    @ConfigData("events.buff.enabled")
+    private boolean buffEventEnabled = true;
+
+    @ConfigData("events.buff.duration")
+    private int buffEventDuration = 15;
+
+    // TNT 雨事件
+    @ConfigData("events.tnt-rain.enabled")
+    private boolean tntRainEnabled = true;
+
+    @ConfigData("events.tnt-rain.duration")
+    private int tntRainDuration = 15;
+
+    @ConfigData("events.tnt-rain.spawn-chance")
+    private double tntRainChance = 0.15;
+
+    // 暗夜降临事件
+    @ConfigData("events.darkness.enabled")
+    private boolean darknessEventEnabled = true;
+
+    @ConfigData("events.darkness.duration")
+    private int darknessEventDuration = 15;
+
+    // 位置交换事件
+    @ConfigData("events.shuffle.enabled")
+    private boolean shuffleEventEnabled = true;
+
+    // 宝藏雨事件
+    @ConfigData("events.treasure-rain.enabled")
+    private boolean treasureRainEnabled = true;
+
+    @ConfigData("events.treasure-rain.duration")
+    private int treasureRainDuration = 15;
+
+    @ConfigData("events.treasure-rain.items-per-tick")
+    private int treasureRainItemsPerTick = 3;
+
+    // 边界收缩事件
+    @ConfigData("events.border-shrink.enabled")
+    private boolean borderShrinkEnabled = true;
+
+    @ConfigData("events.border-shrink.duration")
+    private int borderShrinkDuration = 60;
+
+    @ConfigData("events.border-shrink.initial-size")
+    private double borderInitialSize = 200;
+
+    @ConfigData("events.border-shrink.min-size")
+    private double borderMinSize = 30;
+
     public LuckyPillarConfig(JavaPlugin plugin) {
         super(plugin, "game.yml");
     }
@@ -222,7 +273,8 @@ public class LuckyPillarConfig extends Configuration {
 
         // 验证高度限制
         if (minBuildHeight >= maxBuildHeight) {
-            throw new IllegalArgumentException("最小建造高度必须小于最大建造高度，当前值: min=" + minBuildHeight + ", max=" + maxBuildHeight);
+            throw new IllegalArgumentException(
+                    "最小建造高度必须小于最大建造高度，当前值: min=" + minBuildHeight + ", max=" + maxBuildHeight);
         }
 
         CC.send("&a配置文件加载成功");

@@ -57,12 +57,6 @@ public class Title {
     }
 
     public static void sendTitleAbove1_17(Player player, String title, String subtitle, int fadeIn, int stay, int fadeOut) {
-        Class<?> clazz = player.getClass();
-        try {
-            Object instance = clazz.getDeclaredConstructor().newInstance();
-            ReflectUtil.invokeMethod(instance, "sendTitle", new Class[]{String.class, String.class, int.class, int.class, int.class}, title, subtitle, fadeIn, stay, fadeOut);
-        } catch (Throwable e) {
-            CC.sendError("&fTitle发送失败: ", e);
-        }
+        player.sendTitle(CC.translate(title), CC.translate(subtitle), fadeIn, stay, fadeOut);
     }
 }

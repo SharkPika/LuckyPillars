@@ -1,5 +1,6 @@
 package cn.sky.luckypillar.utils.classutils;
 
+import cn.sky.luckypillar.utils.chat.CC;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -9,7 +10,7 @@ public class NMSUtil {
 		try {
 			return Class.forName("net.minecraft.server." + version + "." + name);
 		} catch (Exception e) {
-			e.printStackTrace();
+			CC.sendError("&c获取 NMS 类失败: " + name, e);
 			return null;
 		}
 	}
@@ -20,7 +21,7 @@ public class NMSUtil {
 		try {
 			return Class.forName("org.bukkit.craftbukkit." + version + "." + name);
 		} catch (Exception e) {
-			e.printStackTrace();
+			CC.sendError("&c获取 CraftBukkit 类失败: " + name, e);
 			return null;
 		}
 	}
@@ -31,7 +32,7 @@ public class NMSUtil {
 			Object playerConnection = handle.getClass().getField("playerConnection").get(handle);
 			playerConnection.getClass().getMethod("sendPacket", getNMSClass("Packet")).invoke(playerConnection, packet);
 		} catch (Exception e) {
-			e.printStackTrace();
+			CC.sendError("&c发送 NMS 数据包失败: " + player.getName(), e);
 		}
 	}
 }
