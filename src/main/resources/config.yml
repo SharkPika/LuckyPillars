@@ -1,5 +1,15 @@
 server: "yourserver.ip"
 
+# 大厅返回配置
+lobby:
+  servername: "lobby"
+  item:
+    slot: 8
+    material: "NETHER_STAR"
+    name: "&a返回大厅"
+    lore:
+      - "&7右键返回大厅"
+
 # 聊天格式
 chatformat:
   waiting: "&7[等待] &f%player_name%: %message%"

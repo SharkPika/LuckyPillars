@@ -14,6 +14,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -22,6 +24,7 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.inventory.ItemStack;
 
 public class PlayerListener implements Listener {
 
@@ -193,12 +196,28 @@ public class PlayerListener implements Listener {
         }
 
         Player player = event.getPlayer();
+
+        if ((event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK)
+                && game.isLobbyItem(event.getItem())) {
+            event.setCancelled(true);
+            game.sendPlayerToLobby(player);
+            return;
+        }
+
         LuckyPillarPlayer lpPlayer = game.getPlayer(player);
         boolean isSpectator = (lpPlayer != null && lpPlayer.getState() == PlayerState.SPECTATING)
                 || game.isSpectator(player);
 
         if (game.getStateManager().isWaiting() || game.getStateManager().isStarting() || isSpectator) {
             event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onPlayerInvClick(InventoryClickEvent event) {
+        ItemStack item = event.getCurrentItem();
+        if (game.isLobbyItem(item)) {
+            game.sendPlayerToLobby((Player) event.getWhoClicked());
         }
     }
 }

@@ -66,6 +66,7 @@ public class SkyLuckyPillar extends JavaPlugin {
     public void onEnable() {
         // 初始化游戏
         this.game = new LuckyPillarGame(this, this.gameConfig, this.skyConfig);
+        this.getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
 
         // 初始化显示管理器
         this.bossBarManager = new BossBarManager(this, this.game, this.skyConfig);
@@ -102,6 +103,8 @@ public class SkyLuckyPillar extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        this.getServer().getMessenger().unregisterOutgoingPluginChannel(this, "BungeeCord");
+
         if (this.assemble != null) {
             this.assemble.cleanup();
         }

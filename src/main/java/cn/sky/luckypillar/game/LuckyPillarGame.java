@@ -17,21 +17,26 @@ import lombok.Setter;
 import lombok.ToString;
 import org.bukkit.*;
 import org.bukkit.entity.Firework;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.FireworkMeta;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 /**
- * SkyLuckyPillar 婵犵數濮烽弫鎼佸磻閻愬搫绠伴柟闂寸缁犵喖鏌ㄩ悢鍝勑㈤柛銊ュ€圭换娑㈠幢濡搫顫庨梺宕囩帛濮婅崵妲愰幘瀛樺濠殿喗鍩堟禍婵堢矉閹烘埈娼ㄩ柍褜鍓熷璇测槈閵忕姷顔婇梺鍝勬川閸犳捇濡撮幇顑芥斀?
- * 闂傚倷娴囧畷鍨叏閻㈢绀夋俊銈呮噹缁愭鏌￠崶銉ョ仾闁稿孩顨嗘穱濠囧Χ閸涱喖娅ｉ梺鍝勵儎閼冲墎妲愰幘璇查唶闁靛繒濮弸鍛存⒑閹肩偛鈧洟顢栭崱娆愬床婵炴垯鍨圭粻濠氭煣韫囷絽浜滈柡鍡楃墦濮婃椽骞栭悙鎻掝瀴闂佽崵鍟块弲鐘荤嵁閸℃稑绀冩い鏃囧亹椤︽澘顪冮妶鍡樺暗闁哥姵鍔曢埢宥夊閵堝棌鎷洪梺鍛婄☉閿曪箓鈥栭崗闂寸箚妞ゆ劑鍨归顓燁殽閻愯韬€规洖宕埥澶娢熼搹鐟扮秮闂傚倷鑳剁划顖炲蓟瑜忛幏鍐晝閸屾俺袝闂侀€炲苯澧存慨?
+ * SkyLuckyPillar 游戏主控制器
+ * 负责整个游戏的生命周期管理
  */
 
 @Getter
@@ -65,6 +70,7 @@ public class LuckyPillarGame {
     private BukkitTask countdownTask;
     private int countdown;
     private long gameStartTime;
+    private boolean lobbyItemMaterialWarned;
 
     public LuckyPillarGame(JavaPlugin plugin, LuckyPillarConfig config, SkyConfig skyConfig) {
         this.plugin = plugin;
@@ -146,6 +152,7 @@ public class LuckyPillarGame {
             return false;
         }
         lpPlayer.getBukkitPlayer().teleport(pillar.getTopLocation());
+        giveLobbyItem(player);
 
         Map<String, String> placeholders = new HashMap<>();
         placeholders.put("player", player.getName());
@@ -320,6 +327,7 @@ public class LuckyPillarGame {
         player.setGameMode(GameMode.SPECTATOR);
         player.setAllowFlight(true);
         player.setFlying(true);
+        player.teleport(this.center);
     }
 
     public boolean isSpectator(Player player) {
@@ -337,11 +345,13 @@ public class LuckyPillarGame {
             player.setGameMode(GameMode.SPECTATOR);
             player.setAllowFlight(true);
             player.setFlying(true);
+            giveLobbyItem(player);
             return true;
         }
 
         LuckyPillarPlayer spectator = new LuckyPillarPlayer(player);
         respawnAsSpectator(spectator);
+        giveLobbyItem(player);
         return true;
     }
 
@@ -381,6 +391,112 @@ public class LuckyPillarGame {
         } else if (alivePlayers.isEmpty()) {
             endGame(null);
         }
+    }
+
+    public void giveLobbyItem(Player player) {
+        if (player == null || !player.isOnline()) {
+            return;
+        }
+
+        ItemStack item = createLobbyItem();
+
+        int slot = Math.max(0, Math.min(35, skyConfig.getLobbyItemSlot()));
+        player.getInventory().setItem(slot, item);
+        player.updateInventory();
+    }
+
+    public void removeLobbyItem(Player player) {
+        if (player == null || !player.isOnline()) {
+            return;
+        }
+
+        ItemStack[] contents = player.getInventory().getContents();
+        for (int i = 0; i < contents.length; i++) {
+            ItemStack current = contents[i];
+            if (isLobbyItem(current)) {
+                player.getInventory().setItem(i, null);
+            }
+        }
+    }
+
+    public boolean isLobbyItem(ItemStack item) {
+        if (item == null) {
+            return false;
+        }
+
+        ItemStack template = createLobbyItem();
+        if (template.getType() != item.getType()) {
+            return false;
+        }
+
+        if (!item.hasItemMeta() || !template.hasItemMeta()) {
+            return false;
+        }
+
+        ItemMeta itemMeta = item.getItemMeta();
+        ItemMeta templateMeta = template.getItemMeta();
+        if (itemMeta == null || templateMeta == null) {
+            return false;
+        }
+
+        String itemName = itemMeta.hasDisplayName() ? ChatColor.stripColor(itemMeta.getDisplayName()) : "";
+        String templateName = templateMeta.hasDisplayName() ? ChatColor.stripColor(templateMeta.getDisplayName()) : "";
+        return Objects.equals(itemName, templateName);
+    }
+
+    public void sendPlayerToLobby(Player player) {
+        if (player == null || !player.isOnline()) {
+            return;
+        }
+
+        String serverName = skyConfig.getLobbyServername();
+        if (serverName == null || serverName.isBlank()) {
+            CC.send(player, "&c未配置大厅服务器 请联系管理员");
+            return;
+        }
+
+        try {
+            ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+            DataOutputStream out = new DataOutputStream(byteStream);
+            out.writeUTF("Connect");
+            out.writeUTF(serverName);
+            player.sendPluginMessage(plugin, "BungeeCord", byteStream.toByteArray());
+        } catch (IOException e) {
+            CC.send(player, "&c发送回大厅请求失败 请稍后重试");
+            CC.sendError("&c发送 BungeeCord Connect 消息失败", e);
+        }
+    }
+
+    private ItemStack createLobbyItem() {
+        Material material = resolveLobbyItemMaterial();
+        ItemStack item = new ItemStack(material);
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) {
+            return item;
+        }
+
+        meta.setDisplayName(CC.translate(skyConfig.getLobbyItemName()));
+        List<String> lore = skyConfig.getLobbyItemLore();
+        if (lore != null && !lore.isEmpty()) {
+            meta.setLore(CC.translate(lore));
+        }
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    private Material resolveLobbyItemMaterial() {
+        String materialName = skyConfig.getLobbyItemMaterial();
+        Material material = materialName == null ? null : Material.matchMaterial(materialName.toUpperCase());
+        if (material != null) {
+            return material;
+        }
+
+        if (!lobbyItemMaterialWarned) {
+            lobbyItemMaterialWarned = true;
+            CC.warn("&e大厅返回物品材质无效，已使用默认材质 NETHER_STAR。配置值: "
+                    + skyConfig.getLobbyItemMaterial());
+        }
+        return Material.NETHER_STAR;
     }
 
     public void broadcast(String message) {
@@ -449,6 +565,7 @@ public class LuckyPillarGame {
                 player.setGameMode(GameMode.SURVIVAL);
                 player.setHealth(20.0);
                 player.setFoodLevel(20);
+                removeLobbyItem(player);
             }
         }
 

@@ -20,6 +20,22 @@ public class SkyConfig extends Configuration {
     @ConfigData("server")
     private String server = "yourserver.ip";
 
+    // 大厅返回配置
+    @ConfigData("lobby.servername")
+    private String lobbyServername = "lobby";
+
+    @ConfigData("lobby.item.slot")
+    private int lobbyItemSlot = 8;
+
+    @ConfigData("lobby.item.material")
+    private String lobbyItemMaterial = "NETHER_STAR";
+
+    @ConfigData("lobby.item.name")
+    private String lobbyItemName = "&a返回大厅";
+
+    @ConfigData("lobby.item.lore")
+    private List<String> lobbyItemLore = List.of("&7右键返回大厅");
+
     // 聊天格式
     @ConfigData("chatformat.waiting")
     private String chatFormatWaiting = "&7[等待] &f%player_name%: %message%";
